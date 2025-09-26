@@ -1,37 +1,33 @@
-# test_size.py — quick visual size check for one mesh in Swift
-
-import os, time
+import os
+from roboticstoolbox.backends.swift import Swift
+from spatialgeometry import Mesh, Cuboid
 from spatialmath import SE3
-import swift
-from roboticstoolbox.backends.swift import Mesh, Shape  # <-- FIXED import
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+MESH_FILE = os.path.join(HERE, "l1_base_vs08_mm.dae")   # Use your mesh filename here
 
-# Point to your exported base link
-MESH_FILE = os.path.join(HERE, "l1_base_vs08_mm.dae")
-
-# If your mesh is in millimetres, use 0.001. If in metres, use 1.0.
-VISUAL_SCALE = 0.001
+# -- Try extremely large scaling factors since your mesh is tiny ↓↓↓
+VISUAL_SCALE = 1500.0   # Increase or decrease this as needed
 
 def main():
-    env = swift.Swift()
+    if not os.path.exists(MESH_FILE):
+        print(f"[ERR] Mesh file not found: {MESH_FILE}")
+        return
+    print(f"[INFO] File exists, size = {os.path.getsize(MESH_FILE)/1e6:.2f} MB")
+
+    env = Swift()
     env.launch(realtime=True)
 
-    # Reference objects for scale
-    env.add(Shape.Box(0.10, 0.10, 0.10, pose=SE3(0.30, 0, 0.05)))   # 10 cm cube
-    env.add(Shape.Box(1.00, 1.00, 0.01, pose=SE3(0, 0, -0.005)))    # 1 m floor tile
+    # # Reference geometry for scale
+    # env.add(Cuboid([1, 1, 0.02], pose=SE3(0, 0, -0.01), color=[0.8,0.8,0.8,1]))  # 1m x 1m floor
+    # env.add(Cuboid([0.1, 0.1, 0.1], pose=SE3(0.4, 0, 0.05), color=[0.1,0.6,1,1]))  # 0.1m cube
 
-    # Load your base mesh
-    base = Mesh(filename=MESH_FILE)
-    base.scale = [VISUAL_SCALE, VISUAL_SCALE, VISUAL_SCALE]
-    base.T = SE3(0, 0, 0).A      # place at origin
+    # Add your mesh; adjust pose Z if mesh is sunken in floor
+    base = Mesh(MESH_FILE, pose=SE3(0, 0, 0.1), scale=[VISUAL_SCALE]*3, color=[0.3,0.3,0.3,1])
     env.add(base)
 
-    print(f"Loaded: {os.path.basename(MESH_FILE)}  (visual scale={VISUAL_SCALE})")
-    print("Floor tile = 1m, cube = 0.1m for reference")
-
+    print(f"Mesh loaded at scale={VISUAL_SCALE}. Compare it to floor (1m) and blue cube (0.1m).")
     env.hold()
-    time.sleep(0.5)
 
 if __name__ == "__main__":
     main()
