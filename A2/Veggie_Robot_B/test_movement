@@ -1,0 +1,155 @@
+##  @file
+#   @brief DENSO VS-068 Robot (Veggie Arm) with 3D DAE meshes
+#   @author Based on LinearUR3 example
+#   @date September 26, 2025
+
+import swift
+import roboticstoolbox as rtb
+import spatialmath.base as spb
+from spatialmath import SE3
+from ir_support.robots.DHRobot3D import DHRobot3D
+import time
+import os
+import numpy as np
+from math import pi
+
+class VeggieVS068(DHRobot3D):
+    def __init__(self):
+        """
+        DENSO VS-068 Robot (Veggie Arm)
+        6-DOF industrial robot with DAE meshes
+        """
+        # DH links
+        links = self._create_DH()
+
+        # Names of the robot link files in the directory (matching your file structure)
+        link3D_names = dict(
+            link0='base_vs08_mm',           # Base
+            link1='l1_shoulder_vs068_mm',   # Shoulder
+            link2='l2_upperarm_vs068_mm',   # Upper arm
+            link3='l3_forearm_vs068_mm',    # Forearm
+            link4='l4_wrist01_vs068_mm',    # Wrist 1
+            link5='l5_wrist02_vs068_mm',    # Wrist 2 
+            link6='l6_flange_vs068_mm'      # Flange/End effector
+        )
+
+        # Joint configuration and 3D object transforms
+        qtest = [0, np.deg2rad(-30), np.deg2rad(45), np.deg2rad(-15), np.deg2rad(15), 0]
+        
+        # Use identity transforms - DHRobot3D handles differently than direct Mesh creation
+        I = np.eye(4)
+        qtest_transforms = [I, I, I, I, I, I, I]
+
+        current_path = os.path.abspath(os.path.dirname(__file__))
+        super().__init__(
+            links, 
+            link3D_names, 
+            name='VeggieVS068', 
+            link3d_dir=current_path, 
+            qtest=qtest, 
+            qtest_transforms=qtest_transforms
+        )
+        
+        # Set base pose
+        self.base = SE3(0, 0, 0)
+        
+        # Home configuration
+        q_home = [0, np.deg2rad(-20), np.deg2rad(35), np.deg2rad(-10), np.deg2rad(10), 0]
+        self.q = np.clip(q_home, self.qlim[0, :], self.qlim[1, :])
+
+    def _create_DH(self):
+        """
+        Create DENSO VS-068 DH model (approximate parameters in meters)
+        """
+        # VS-068 DH parameters (in meters)
+        a     = [0.060, 0.320, 0.260, 0.000, 0.000, 0.000]
+        d     = [0.120, 0.000, 0.000, 0.220, 0.000, 0.080]
+        alpha = [+pi/2, 0.0, -pi/2, +pi/2, -pi/2, 0.0]
+        
+        # Joint limits (degrees converted to radians)
+        qlim = [
+            np.deg2rad([-170, 170]),  # J1
+            np.deg2rad([-120, 120]),  # J2
+            np.deg2rad([-140, 140]),  # J3
+            np.deg2rad([-180, 180]),  # J4
+            np.deg2rad([-180, 180]),  # J5
+            np.deg2rad([-360, 360]),  # J6
+        ]
+
+        links = []
+        for i in range(6):
+            link = rtb.RevoluteDH(d=d[i], a=a[i], alpha=alpha[i], qlim=qlim[i])
+            links.append(link)
+        return links
+
+    def scale_visuals_after_load(self, scale=500.0):
+        """
+        Scale the visual meshes AFTER they've been loaded by DHRobot3D
+        This must be called AFTER add_to_env()
+        """
+        # Try different possible attribute names for the loaded meshes
+        for attr_name in ['_link3d_models', '_link3d_shapes', '_meshes', '_graphics']:
+            if hasattr(self, attr_name):
+                meshes = getattr(self, attr_name)
+                if isinstance(meshes, dict):
+                    print(f"Found meshes in {attr_name}, attempting to scale...")
+                    for link_name, mesh_obj in meshes.items():
+                        try:
+                            # Try direct scale attribute
+                            if hasattr(mesh_obj, 'scale'):
+                                mesh_obj.scale = [scale, scale, scale]
+                                print(f"Scaled {link_name}")
+                            # Try Swift mesh scaling
+                            elif hasattr(mesh_obj, 'T'):
+                                scale_matrix = np.diag([scale, scale, scale, 1.0])
+                                mesh_obj.T = scale_matrix @ mesh_obj.T
+                                print(f"Transformed {link_name}")
+                        except Exception as e:
+                            print(f"Failed to scale {link_name}: {e}")
+                            continue
+
+    def test(self):
+        """
+        Test the robot by displaying it in Swift and performing a simple movement
+        """
+        env = swift.Swift()
+        env.launch(realtime=True)
+        
+        # Set to test configuration and add to environment
+        self.q = self._qtest
+        self.add_to_env(env)
+
+        print(f"Robot reach: {self.reach:.3f} m")
+        
+        # NOW scale the visuals after they're loaded
+        self.scale_visuals_after_load(500.0)
+        
+        print("Robot loaded successfully!")
+
+        # Give time for scaling to take effect
+        time.sleep(1)
+        env.step(0.1)
+
+        # Create a simple trajectory
+        q0 = self.q.copy()
+        q1 = q0.copy()
+        q1[0] += np.deg2rad(45)   # Base rotation
+        q1[1] -= np.deg2rad(30)   # Shoulder
+        q1[2] += np.deg2rad(20)   # Elbow
+        q1[3] -= np.deg2rad(25)   # Wrist 1
+        q1[4] += np.deg2rad(30)   # Wrist 2
+        q1[5] += np.deg2rad(90)   # Flange rotation
+
+        # Execute trajectory
+        qtraj = rtb.jtraj(q0, q1, 80).q
+        for q in qtraj:
+            self.q = np.clip(q, self.qlim[0, :], self.qlim[1, :])
+            env.step(0.02)
+
+        env.hold()
+        time.sleep(3)
+
+if __name__ == "__main__":
+    robot = VeggieVS068()
+    input("Press Enter to test movement of DENSO VS-068...")
+    robot.test()

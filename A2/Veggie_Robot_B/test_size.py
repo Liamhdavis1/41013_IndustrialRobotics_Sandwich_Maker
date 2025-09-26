@@ -1,32 +1,42 @@
+# test_size.py — minimal: show just the base link at origin
+
 import os
 from roboticstoolbox.backends.swift import Swift
-from spatialgeometry import Mesh, Cuboid
+from spatialgeometry import Mesh
 from spatialmath import SE3
+from math import pi
+import trimesh
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MESH_FILE = os.path.join(HERE, "l1_base_vs08_mm.dae")   # Use your mesh filename here
+MESH_FILE = os.path.join(HERE, "base_vs08_mm.dae")
 
-# -- Try extremely large scaling factors since your mesh is tiny ↓↓↓
-VISUAL_SCALE = 1500.0   # Increase or decrease this as needed
+
+
+def compute_ground_lift(path, rot_se3, scale):
+    m = trimesh.load(path, force='mesh')
+    m.apply_transform(rot_se3.A)        # apply your rotation
+    minz = m.bounds[0, 2]               # lowest vertex z (meters)
+    return (-minz) * scale              # convert to your visual scale
+
 
 def main():
     if not os.path.exists(MESH_FILE):
         print(f"[ERR] Mesh file not found: {MESH_FILE}")
         return
-    print(f"[INFO] File exists, size = {os.path.getsize(MESH_FILE)/1e6:.2f} MB")
 
     env = Swift()
     env.launch(realtime=True)
 
-    # # Reference geometry for scale
-    # env.add(Cuboid([1, 1, 0.02], pose=SE3(0, 0, -0.01), color=[0.8,0.8,0.8,1]))  # 1m x 1m floor
-    # env.add(Cuboid([0.1, 0.1, 0.1], pose=SE3(0.4, 0, 0.05), color=[0.1,0.6,1,1]))  # 0.1m cube
-
-    # Add your mesh; adjust pose Z if mesh is sunken in floor
-    base = Mesh(MESH_FILE, pose=SE3(0, 0, 0.1), scale=[VISUAL_SCALE]*3, color=[0.3,0.3,0.3,1])
+    # “Second smallest” from your ladder test ≈ 500x
+    SCALE = 500.0
+    ROT   = SE3.Rx(pi/2) 
+    LIFT  = compute_ground_lift(MESH_FILE, ROT, SCALE)                                                  
+    pose = ROT * SE3(0, 0, 0)
+    base = Mesh(MESH_FILE, pose=pose, scale=[SCALE]*3, color=[0.7,0.7,0.7,1])
+    env.add(base)
     env.add(base)
 
-    print(f"Mesh loaded at scale={VISUAL_SCALE}. Compare it to floor (1m) and blue cube (0.1m).")
     env.hold()
 
 if __name__ == "__main__":
