@@ -1,51 +1,58 @@
-# test_gamma_base_only.py
+# test_gamma_mesh.py — spawn ONE Cyton Gamma mesh at origin (Swift)
+
 import os, numpy as np, swift
 from spatialmath import SE3
 import roboticstoolbox as rtb
 from ir_support.robots.DHRobot3D import DHRobot3D
 
-class GammaBaseOnly(DHRobot3D):
-    def __init__(self):
-        # minimal 1-joint robot (locked at 0) so DHRobot3D is happy
+TEST_MESH = "Elbow_Yaw"   # e.g. gamma_base, Shoulder_Pitch, Elbow_Roll, ...
+
+def find_mesh_dir(here, fname):
+    for cand in (here, os.path.join(here, "gamma")):
+        fpath = os.path.join(cand, fname)
+        if os.path.exists(fpath):
+            return cand, fpath
+    raise FileNotFoundError(f"{fname} not found in {here} or ./gamma")
+
+class SingleMeshTester(DHRobot3D):
+    def __init__(self, mesh_name: str):
+        # minimal 1-joint robot (dummy)
         links = [rtb.RevoluteDH(d=0.0, a=0.0, alpha=0.0, qlim=[0.0, 0.0])]
 
-        # supply link0..link1 (we’ll hide link1)
-        link3D_names = {"link0": "gamma_base", "link1": "gamma_base"}
+        # DHRobot3D expects link0 and link1 for 1 DOF
+        link3D_names = {"link0": mesh_name, "link1": mesh_name}
 
-        # no transforms (identity)
         qtest = [0.0]
         qtest_transforms = [np.eye(4), np.eye(4)]
 
         here = os.path.abspath(os.path.dirname(__file__))
-        # look in current folder, or ./gamma subfolder
-        for cand in (here, os.path.join(here, "gamma")):
-            if os.path.exists(os.path.join(cand, "gamma_base.stl")):
-                mesh_dir = cand
-                break
-        else:
-            raise FileNotFoundError("gamma_base.stl not found next to this script or in ./gamma")
+        mesh_dir, fpath = find_mesh_dir(here, mesh_name + ".stl")
+        print("[Using mesh]", fpath)
 
         super().__init__(
             links,
             link3D_names,
-            name="GammaBaseOnly",
+            name=f"Test_{mesh_name}",
             link3d_dir=mesh_dir,
             qtest=qtest,
             qtest_transforms=qtest_transforms,
         )
 
-        self.base = SE3()   # world origin
-        self.q = [0.0]      # locked joint
+        self.base = SE3()
+        self.q = [0.0]
 
     def show(self):
         env = swift.Swift(); env.launch(realtime=True)
         self.add_to_env(env)
-        # hide dummy link1 so only the base is visible
-        try:
-            self._link3d_models["link1"].visible = False
-        except KeyError:
-            pass
+        # hide duplicate link1 so only one mesh is visible
+        for dict_name in ("_link3d_models", "_link3d_shapes", "_link3D"):
+            d = getattr(self, dict_name, None)
+            if isinstance(d, dict) and "link1" in d:
+                try:
+                    d["link1"].visible = False
+                except Exception:
+                    pass
         env.hold()
 
 if __name__ == "__main__":
-    GammaBaseOnly().show()
+    SingleMeshTester(TEST_MESH).show()
