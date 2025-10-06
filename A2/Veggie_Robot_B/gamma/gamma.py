@@ -30,10 +30,10 @@ class VeggieRobotGamma(DHRobot3D):
         # Mesh names (no extensions)
         link3D_names = dict(
             link0='gamma_base',
-            link1='Shoulder_Pitch',
-            link2='Shoulder_Roll',
-            link3='Elbow_Pitch',
-            link4='Elbow_Roll',
+            link1='Shoulder_Roll',
+            link2='Shoulder_Pitch',
+            link3='Elbow_Roll',
+            link4='Elbow_Pitch',
             link5='Elbow_Yaw',
             link6='Wrist_Pitch',
             link7='Wrist_Roll'
@@ -45,13 +45,13 @@ class VeggieRobotGamma(DHRobot3D):
         qtest = [0.0]*7
         qtest_transforms = [
             spb.rpy2tr(0, 0, 0, order='xyz'),  # link0: gamma_base
-            spb.rpy2tr(1.5708, 0, 3.14159, order='xyz'),                        # link1: Shoulder_Roll
-            spb.transl(0.028, 0, 0) @ spb.rpy2tr(0, 1.5708, 0, order='xyz'),    # link2: Shoulder_Pitch
-            spb.rpy2tr(0, 0, 3.92699, order='xyz'),                             # link3: Elbow_Roll
-            spb.transl(0.027, 0, 0) @ spb.rpy2tr(1.5708, 0, 1.5708, order='xyz'), # link4: Elbow_Pitch
-            spb.rpy2tr(1.5708, 0, 0, order='xyz'),                              # link5: Elbow_Yaw
-            spb.transl(0.027, 0, 0) @ spb.rpy2tr(1.5708, 0, 1.5708, order='xyz'), # link6: Wrist_Pitch
-            spb.rpy2tr(0, 3.14159, 1.5708, order='xyz'),                        # link7: Wrist_Roll
+            spb.transl(0, 0, 0.054) @ spb.rpy2tr(pi, 0, -pi/2, order='xyz'),                        # link1: Shoulder_Roll
+            spb.transl(-0.028, 0, 0.116) @ spb.rpy2tr(0, pi/2, 0, order='xyz') @ spb.rpy2tr(pi, 0, 0),    # link2: Shoulder_Pitch
+            spb.transl(0, 0, 0.2008) @ spb.rpy2tr(3.92699+pi/2, 0, 0, order='xyz'),                             # link3: Elbow_Roll
+            spb.transl(0, 0.027, 0.255) @ spb.rpy2tr(0, pi/2, pi/2, order='xyz') @ spb.rpy2tr(0, pi/2, 0), # link4: Elbow_Pitch
+            spb.transl(0, 0, 0.325) @ spb.rpy2tr(0, pi/2, pi/2, order='xyz'),                              # link5: Elbow_Yaw
+            spb.transl(0, 0.027, 0.395) @ spb.rpy2tr(0, pi/2, pi/2, order='xyz') @ spb.rpy2tr(0, pi/2, 0), # link6: Wrist_Pitch
+            spb.transl(0.036, 0, 0.44) @ spb.rpy2tr(0, pi/2, 0, order='xyz'),                        # link7: Wrist_Roll
         ]
 
         links = self._create_DH()
@@ -127,7 +127,7 @@ class VeggieRobotGamma(DHRobot3D):
     def test(self):
         env = swift.Swift()
         env.launch(realtime=True)
-        self.q = [0.0] * 7
+        self.q = self._qtest
         self.add_to_env(env)
         env.hold()
 
@@ -183,10 +183,13 @@ def test_single_file(
 # ----- Main Entrypoint -----
 if __name__ == "__main__":
     # Test a single mesh visually:
-    input("Press Enter to test single file")
-    test_single_file("Shoulder_Roll.dae", (0, 0, 0), (1.5708, 0, 3.14159))   # Change name to test other files
+    # input("Press Enter to test single file")
 
-    # Then spawn the full robot:
-    # r = VeggieRobotGamma()
+    # test_single_file("gamma_base.dae", (0, 0, 0), (0, 0, 0))
+    # test_single_file("Shoulder_Roll.dae", (0, 0, 0), (pi, 0, -pi/2))
+    # test_single_file("Shoulder_Pitch.dae", (0, 0, 0), (0, 0, 0))   # Change name to test other files
+
+    # # Then spawn the full robot:
+    r = VeggieRobotGamma()
     # input("Press Enter to spawn Veggie Robot Gamma")
-    # r.test()
+    r.test()
