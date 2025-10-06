@@ -111,8 +111,8 @@ class SingleMeshTester:
 # ---------------------------------------------------------------------------------------#
 if __name__ == "__main__":
     r = VeggieRobotGamma()
-    input("Press Enter to test single file")
-    tester = SingleMeshTester('Elbow_Pitch.dae')
-    tester.test()
-    # input("Press Enter to spawn Veggie Robot Gamma")
-    # r.test()
+    # input("Press Enter to test single file")
+    # tester = SingleMeshTester('Elbow_Pitch.dae')
+    # tester.test()
+    input("Press Enter to spawn Veggie Robot Gamma")
+    r.test()
