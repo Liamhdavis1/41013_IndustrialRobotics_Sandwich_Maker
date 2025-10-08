@@ -67,70 +67,83 @@ class VeggieRobotGamma(DHRobot3D):
         self.q = [0.0] * 7
 
     def _create_DH(self):
+        """
+        Define DH parameters for the Cyton Gamma 300 (converted from mm to m)
+        """
+
+        # 1) Joint limits converted from table ranges (deg -> rad)
         qlim = [
-            [-3.9,  1.5],   # shoulder_roll
-            [-2.6,  0.2],   # shoulder_pitch
-            [-3.8,  1.4],   # elbow_roll
-            [-3.2,  0.8],   # elbow_pitch
-            [-3.2,  0.8],   # elbow_yaw
-            [-3.1,  0.8],   # wrist_pitch
-            [-3.8,  1.4],   # wrist_roll
+            [np.deg2rad(30), np.deg2rad(330)],  # J1
+            [np.deg2rad(70), np.deg2rad(280)],  # J2
+            [np.deg2rad(30), np.deg2rad(330)],  # J3
+            [np.deg2rad(70), np.deg2rad(280)],  # J4
+            [np.deg2rad(70), np.deg2rad(280)],  # J5
+            [np.deg2rad(75), np.deg2rad(285)],  # J6
+            [np.deg2rad(30), np.deg2rad(330)],  # J7
         ]
 
-        # 2) Visible z-offsets (meters) from URDF joint <origin xyz="0 0 dz">
-        d = [
-            0.05315,   # shoulder_roll_joint_init_xyz
-            0.063,     # shoulder_pitch_joint_init_xyz
-            0.089,     # elbow_roll_joint_init_xyz
-            0.052,     # elbow_pitch_joint_init_xyz
-            0.072,     # elbow_yaw_joint_init_xyz
-            0.0718,    # wrist_pitch_joint_init_xyz
-            0.051425,  # wrist_roll_joint_init_xyz
-        ]
+        # 2) Link lengths (aᵢ) [m]
+        a = np.array([0, 0, 0, 71.8, 71.8, 0, 0]) / 1000.0
 
-        # 3) Link lengths along x: assume zero (axes largely intersect in this design)
-        a = [0.0]*7
+        # 3) Link twists (αᵢ) [rad]
+        alpha = np.deg2rad([90, -90, 0, 0, 90, -90, 0])
 
-        # 4) Twists alpha_i: angle between successive joint axes (≈ ±90° when axes are orthogonal)
-        #    Axis sequence from URDF: Z, X, Z, X, (−Y), X, Z  → use ±pi/2 pattern
-        alpha = [
-            0.0,        # z -> z (parallel at base: 0)
-            +pi/2,      # z -> x
-            -pi/2,      # x -> z
-            +pi/2,      # z -> x
-            -pi/2,      # x -> (-y) ~ -90 about +x chain -> treat as -pi/2
-            +pi/2,      # (-y) -> x (orthogonal)
-            -pi/2,      # x -> z
-        ]
+        # 4) Link offsets (dᵢ) [m]
+        d = np.array([0, 0, 0, 0, 0, 300, 260]) / 1000.0
 
-        # 5) Offsets so DH q=0 matches URDF 'home' rpy about the joint axis.
-        #    From your URDF rpy’s at each joint:
-        #      shoulder_roll: rpy z = +1.2
-        #      shoulder_pitch: rpy x = +1.2  (shows up as theta offset in DH after frame placement)
-        #      elbow_roll: rpy z = +1.2
-        #      elbow_pitch: rpy x = +1.2
-        #      elbow_yaw: rpy y = -1.2
-        #      wrist_pitch: rpy x = +1.2
-        #      wrist_roll: rpy z = +1.2
-        #   Start with these; adjust signs after FK check if any link appears rotated 180°.
-        offset = [ +1.2, +1.2, +1.2, +1.2, -1.2, +1.2, +1.2 ]
+        # 5) Joint variable offsets θ offsets [rad]
+        offset = [0]*7  # assume θ=0 aligns with mechanical home for now
 
+        # Create DH links
         links = []
         for i in range(7):
             links.append(
                 rtb.RevoluteDH(
-                    a=a[i], d=d[i], alpha=alpha[i], offset=offset[i], qlim=qlim[i]
+                    a=a[i],
+                    alpha=alpha[i],
+                    d=d[i],
+                    offset=offset[i],
+                    qlim=qlim[i],
                 )
             )
+
         return links
+
+
     
-    def test(self):
+    def test_jtraj(self):
+        """
+        Animate a smooth trajectory from the home pose to a goal configuration.
+        """
         env = swift.Swift()
         env.launch(realtime=True)
+
+        # Add robot to Swift scene
         self.q = self._qtest
         self.add_to_env(env)
-        env.hold()
 
+        # --- Define goal configuration ---
+        # Slightly move each joint, exaggerate wrist motion for visibility
+        q_goal = [
+            self.q[0] ,   # Shoulder_Roll
+            self.q[1] ,   # Shoulder_Pitch
+            self.q[2] ,   # Elbow_Roll
+            self.q[3] ,   # Elbow_Pitch
+            self.q[4]  + pi/6,   # Elbow_Yaw
+            self.q[5] ,   # Wrist_Pitch
+            self.q[6] ,   # Wrist_Roll
+        ]
+
+        # --- Generate trajectory (50 points) ---
+        qtraj = rtb.jtraj(self.q, q_goal, 50).q
+
+        # --- Animate ---
+        for q in qtraj:
+            self.q = q
+            env.step(0.2)  # 20 ms per frame
+
+        env.hold()
+        time.sleep(2)
 
 # ----- Single Mesh Tester -----
 def test_single_file(
@@ -192,4 +205,4 @@ if __name__ == "__main__":
     # # Then spawn the full robot:
     r = VeggieRobotGamma()
     # input("Press Enter to spawn Veggie Robot Gamma")
-    r.test()
+    r.test_jtraj()
