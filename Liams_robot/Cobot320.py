@@ -7,7 +7,7 @@ import time
 import os
 from math import pi
 
-class myCobot(DHRobot3D):
+class Cobot320(DHRobot3D):
     def __init__(self):
         links = self._create_DH()
 
@@ -72,5 +72,5 @@ class myCobot(DHRobot3D):
 
 
 if __name__ == "__main__":
-    robot = myCobot()
+    robot = Cobot320()
     robot.test()
