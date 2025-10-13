@@ -16,6 +16,12 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 
 # --- Ingredient definitions  ---
 INGREDIENTS = {
+    "glass": {
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "glass.stl"),
+        "scale": (1, 1, 1),
+        "color": [0.6, 0.6, 0.6, 0.4]
+    },
     "bench": {
         # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl",
         "path": os.path.join(current_path, "env", "bench.stl"),
@@ -64,6 +70,24 @@ INGREDIENTS = {
         "scale": (0.1, 0.1, 0.1),
         "color": [0.56, 0.3, 0.04, 1]
     },
+        "chicken": {
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
+        "scale": (0.05, 0.05, 0.03),
+        "color": [0.9, 0.8, 0.6, 1]
+    },
+        "cucumber": {
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
+        "scale": (0.04, 0.04, 0.04),
+        "color": [0.2, 0.6, 0.3, 1]
+    },
+        "beetroot": {
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
+        "scale": (0.04, 0.04, 0.04),
+        "color": [0.5, 0.09, 0.4, 1]
+    }
 }
 
 # --- Mesh registry so you can reference them later ---
@@ -85,6 +109,7 @@ def spawn_ingredient(env, name, pose):
 
 # --- Example spawns ---
 bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
+glass =spawn_ingredient(env, "glass", SE3(0, 0, 0))
 bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, -0.25, 1))
 ham1 = spawn_ingredient(env, "ham", SE3(-0.99, -0.34, 1.01))
 ham2 = spawn_ingredient(env, "ham", SE3(-1.03, -0.14, 1.01))
@@ -184,6 +209,38 @@ beef_pile = spawn_pile(
 )
 
 
+chicken_pile = spawn_pile(
+    env,
+    ingredient="chicken",
+    n=8,
+    center=(0.75, -0.1, 0.92),
+    dx_range=(-0.1, 0.1),
+    dy_range=(-0.02, 0.02),
+    dz_step=0.002,
+    dz_jitter=(-0.05, 0.05)
+)
+
+cucumber_pile = spawn_pile(
+    env,
+    ingredient="cucumber",
+    n=15,
+    center=(0.25, -0.1, 0.92),
+    dx_range=(-0.1, 0.1),
+    dy_range=(-0.02, 0.02),
+    dz_step=0.002,
+    dz_jitter=(-0.05, 0.05)
+)
+
+beetroot_pile = spawn_pile(
+    env,
+    ingredient="beetroot",
+    n=15,
+    center=(-0.25, -0.1, 0.92),
+    dx_range=(-0.1, 0.1),
+    dy_range=(-0.02, 0.02),
+    dz_step=0.002,
+    dz_jitter=(-0.05, 0.05)
+)
 # slice_to_move = ham_pile[2].t  # e.g., third slice
 # start_z = slice_to_move[2]  # get starting height
 # for z in np.linspace(start_z, 1.2, 20):

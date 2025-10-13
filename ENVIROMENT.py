@@ -48,6 +48,15 @@ bench = Mesh(filename=BENCH,
              color=[0.6, 0.6, 0.6, 1])
 env.add(bench)
 
+GLASS = os.path.join(current_path, "env", "glass.stl")
+
+# BENCH = r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl""
+# BENCH = 'env/bench'
+glass = Mesh(filename=GLASS, 
+             pose=SE3(0, 0, 0), 
+             color=[0.6, 0.6, 0.6, 0.4])
+env.add(glass)
+
 # BREAD_BOTTOM = r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-bottom.stl"
 # bread_bottom = Mesh(filename=BREAD_BOTTOM, 
 #              pose=SE3(-1, -0.25, 1),
