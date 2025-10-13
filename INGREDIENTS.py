@@ -12,43 +12,58 @@ from math import pi
 env = swift.Swift()
 env.launch(realtime=True)
 
+current_path = os.path.abspath(os.path.dirname(__file__))
+
 # --- Ingredient definitions  ---
 INGREDIENTS = {
     "bench": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl",
+        "path": os.path.join(current_path, "env", "bench.stl"),
         "scale": (1, 1, 1),
         "color": [0.6, 0.6, 0.6, 1]
     },
     "bread_bottom": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-bottom.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-bottom.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "bread-bottom.stl"),
         "scale": (0.1, 0.1, 0.1),
         "color": [0.95, 0.77, 0.53, 1]
     },
     "bread_top": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-top.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-top.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "bread-top.stl"),
         "scale": (0.1, 0.1, 0.1),
         "color": [0.95, 0.77, 0.53, 1]
     },
     "ham": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\ham.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\ham.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "ham.stl"),
         "scale": (0.1, 0.1, 0.1),
         "color": [0.7, 0.5, 0.7, 1]
     },
     "lettuce": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\lettace.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\lettace.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "lettace.stl"),
         "scale": (0.01,0.01,0.01),
         "color": [0.25, 0.86, 0.37, 1]
     },
     "tomato": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
         "scale": (0.05, 0.05, 0.05),
         "color": [0.8, 0.1, 0.1, 1]
     },
     "salami": {
-        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
         "scale": (0.05, 0.05, 0.03),
         "color": [0.7, 0.3, 0.3, 1]
-    }
+    },
+    "beef": {
+        # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\ham.stl",
+        "path": os.path.join(current_path, "env", "sandwich", "ham.stl"),
+        "scale": (0.1, 0.1, 0.1),
+        "color": [0.56, 0.3, 0.04, 1]
+    },
 }
 
 # --- Mesh registry so you can reference them later ---
@@ -73,7 +88,8 @@ bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
 bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, -0.25, 1))
 ham1 = spawn_ingredient(env, "ham", SE3(-0.99, -0.34, 1.01))
 ham2 = spawn_ingredient(env, "ham", SE3(-1.03, -0.14, 1.01))
-lettuce = spawn_ingredient(env, "lettuce", SE3(-1.03, -0.26, 1.04)@ SE3.Rz(pi/2))
+lettuce1 = spawn_ingredient(env, "lettuce", SE3(-1.01, -0.25, 1.04)@ SE3.Rz(pi/2))
+lettuce2 = spawn_ingredient(env, "lettuce", SE3(-1.03, -0.27, 1.04)@ SE3.Rz(-pi/2))
 tomato1 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.34, 1.04))
 tomato2 = spawn_ingredient(env, "tomato", SE3(-1.03, -0.24, 1.04))
 tomato3 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.14, 1.04))
@@ -154,6 +170,17 @@ salami_pile = spawn_pile(
     dy_range=(-0.01, 0.01),
     dz_step=0.003,
     dz_jitter=(-0.07, 0.07)
+)
+
+beef_pile = spawn_pile(
+    env,
+    ingredient="beef",
+    n=8,
+    center=(0.75, -0.35, 0.92),
+    dx_range=(-0.1, 0.1),
+    dy_range=(-0.02, 0.02),
+    dz_step=0.002,
+    dz_jitter=(-0.05, 0.05)
 )
 
 

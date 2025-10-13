@@ -15,6 +15,8 @@ from ir_support import UR3
 from math import pi
 # from ir_support.robots import XArm6
 
+
+
 UR3 = UR3()
 XArm = XArm6()
 Cobot = Cobot320()
@@ -34,10 +36,13 @@ Cobot.add_to_env(env)
 
 # Baxter.base = SE3()
 
+current_path = os.path.abspath(os.path.dirname(__file__))
 
+# Build the path to bench.stl relative to this file
+BENCH = os.path.join(current_path, "env", "bench.stl")
 
-
-BENCH = r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\env\bench.dae"
+# BENCH = r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl""
+# BENCH = 'env/bench'
 bench = Mesh(filename=BENCH, 
              pose=SE3(0, 0, 0), 
              color=[0.6, 0.6, 0.6, 1])
