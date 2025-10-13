@@ -15,37 +15,37 @@ env.launch(realtime=True)
 # --- Ingredient definitions  ---
 INGREDIENTS = {
     "bench": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\env\bench.dae",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl",
         "scale": (1, 1, 1),
         "color": [0.6, 0.6, 0.6, 1]
     },
     "bread_bottom": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-bottom.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-bottom.stl",
         "scale": (0.1, 0.1, 0.1),
         "color": [0.95, 0.77, 0.53, 1]
     },
     "bread_top": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-top.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\bread-top.stl",
         "scale": (0.1, 0.1, 0.1),
         "color": [0.95, 0.77, 0.53, 1]
     },
     "ham": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\ham.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\ham.stl",
         "scale": (0.1, 0.1, 0.1),
         "color": [0.7, 0.5, 0.7, 1]
     },
     "lettuce": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\lettace.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\lettace.stl",
         "scale": (0.01,0.01,0.01),
         "color": [0.25, 0.86, 0.37, 1]
     },
     "tomato": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\tomato.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
         "scale": (0.05, 0.05, 0.05),
         "color": [0.8, 0.1, 0.1, 1]
     },
     "salami": {
-        "path": r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\tomato.stl",
+        "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\sandwich\tomato.stl",
         "scale": (0.05, 0.05, 0.03),
         "color": [0.7, 0.3, 0.3, 1]
     }
@@ -73,7 +73,7 @@ bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
 bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, -0.25, 1))
 ham1 = spawn_ingredient(env, "ham", SE3(-0.99, -0.34, 1.01))
 ham2 = spawn_ingredient(env, "ham", SE3(-1.03, -0.14, 1.01))
-lettuce = spawn_ingredient(env, "lettuce", SE3(-1.03, -0.26, 1.04))
+lettuce = spawn_ingredient(env, "lettuce", SE3(-1.03, -0.26, 1.04)@ SE3.Rz(pi/2))
 tomato1 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.34, 1.04))
 tomato2 = spawn_ingredient(env, "tomato", SE3(-1.03, -0.24, 1.04))
 tomato3 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.14, 1.04))
@@ -157,15 +157,15 @@ salami_pile = spawn_pile(
 )
 
 
-slice_to_move = ham_pile[2].t  # e.g., third slice
-start_z = slice_to_move[2]  # get starting height
-for z in np.linspace(start_z, 1.2, 20):
-    # Create a new SE3 pose with updated Z
-    slice_to_move.T = SE3(slice_to_move.t[0],
-                             slice_to_move.t[1],
-                             z)
-    env.step(0)  # redraw scene
-    time.sleep(0.03)
+# slice_to_move = ham_pile[2].t  # e.g., third slice
+# start_z = slice_to_move[2]  # get starting height
+# for z in np.linspace(start_z, 1.2, 20):
+#     # Create a new SE3 pose with updated Z
+#     slice_to_move.T = SE3(slice_to_move.t[0],
+#                              slice_to_move.t[1],
+#                              z)
+#     env.step(0)  # redraw scene
+#     time.sleep(0.03)
 
 
 # def spawn_ham_pile(env, n=12, center=(1.2, -0.35, 0.92)):

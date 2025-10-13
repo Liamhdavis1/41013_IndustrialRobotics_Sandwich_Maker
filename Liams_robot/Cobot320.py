@@ -8,6 +8,16 @@ import os
 from math import pi
 
 class Cobot320(DHRobot3D):
+
+    # scale = {
+    #     'link0': 0.01,
+    #     'link1': 0.01,
+    #     'link2': 0.01,
+    #     'link3': 0.01,
+    #     'link4': 0.01,
+    #     'link5': 0.01,
+    #     'link6': 0.01
+    # }
     def __init__(self):
         links = self._create_DH()
 

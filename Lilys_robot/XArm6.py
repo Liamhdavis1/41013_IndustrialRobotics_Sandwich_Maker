@@ -16,13 +16,13 @@ class XArm6(DHRobot3D):
 
         # STL/visual names (placeholders)
         link3D_names = dict(
-            link0='base0',
-            link1='link1',
-            link2='link2',
-            link3='link3',
-            link4='link4',
-            link5='link5',
-            link6='link6'
+            link0='XArm6/base0',
+            link1='XArm6/link1',
+            link2='XArm6/link2',
+            link3='XArm6/link3',
+            link4='XArm6/link4',
+            link5='XArm6/link5',
+            link6='XArm6/link6'
         )
         # Test configuration
         # qtest = [pi, 0, -pi/2, 0, 0, 0]
