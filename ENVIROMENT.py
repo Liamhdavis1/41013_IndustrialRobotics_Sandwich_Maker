@@ -25,14 +25,14 @@ Cobot = Cobot320()
 env = swift.Swift()
 env.launch(realtime=True)
 
-UR3.base = SE3(0.75,0.5,1)
-UR3.add_to_env(env)
+# UR3.base = SE3(0.75,0.5,1)
+# UR3.add_to_env(env)
 
 XArm.base = SE3(0,0.5,1)
 XArm.add_to_env(env)
 
-Cobot.base = SE3(-0.75,0.5,1)
-Cobot.add_to_env(env)
+# Cobot.base = SE3(-0.75,0.5,1)
+# Cobot.add_to_env(env)
 
 # Baxter.base = SE3()
 
@@ -57,13 +57,13 @@ glass = Mesh(filename=GLASS,
              color=[0.6, 0.6, 0.6, 0.4])
 env.add(glass)
 
-# BREAD_BOTTOM = r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-bottom.stl"
-# bread_bottom = Mesh(filename=BREAD_BOTTOM, 
-#              pose=SE3(-1, -0.25, 1),
-#              scale=[0.1,0.1,0.1], 
-#              color=[0.95, 0.77, 0.53, 1]
-#              )
-# env.add(bread_bottom)
+BREAD_BOTTOM = r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-bottom.stl"
+bread_bottom = Mesh(filename=BREAD_BOTTOM, 
+             pose=SE3(-1, -0.25, 1),
+             scale=[0.1,0.1,0.1], 
+             color=[0.95, 0.77, 0.53, 1]
+             )
+env.add(bread_bottom)
 
 # BREAD_TOP = r"C:\Users\lilyb\OneDrive\Documents\!Uni second Year\IR\A2v2\sandwich\bread-top.stl"
 # bread_top = Mesh(filename=BREAD_TOP, 

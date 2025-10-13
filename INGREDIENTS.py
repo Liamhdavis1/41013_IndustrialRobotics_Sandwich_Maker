@@ -7,12 +7,17 @@ from spatialgeometry import Mesh
 import os
 import time
 from math import pi
+from Lilys_robot.XArm6 import XArm6
 
 # --- Setup environment ---
 env = swift.Swift()
 env.launch(realtime=True)
 
 current_path = os.path.abspath(os.path.dirname(__file__))
+
+XArm = XArm6()
+XArm.base = SE3(-0.7,0.1,1)
+# XArm.add_to_env(env)
 
 # --- Ingredient definitions  ---
 INGREDIENTS = {
@@ -110,15 +115,15 @@ def spawn_ingredient(env, name, pose):
 # --- Example spawns ---
 bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
 glass =spawn_ingredient(env, "glass", SE3(0, 0, 0))
-bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, -0.25, 1))
-ham1 = spawn_ingredient(env, "ham", SE3(-0.99, -0.34, 1.01))
-ham2 = spawn_ingredient(env, "ham", SE3(-1.03, -0.14, 1.01))
-lettuce1 = spawn_ingredient(env, "lettuce", SE3(-1.01, -0.25, 1.04)@ SE3.Rz(pi/2))
-lettuce2 = spawn_ingredient(env, "lettuce", SE3(-1.03, -0.27, 1.04)@ SE3.Rz(-pi/2))
-tomato1 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.34, 1.04))
-tomato2 = spawn_ingredient(env, "tomato", SE3(-1.03, -0.24, 1.04))
-tomato3 = spawn_ingredient(env, "tomato", SE3(-0.98, -0.14, 1.04))
-bread_top = spawn_ingredient(env, "bread_top", SE3(-1, -0.25, 1.04))
+# bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, 0.25, 1))
+# ham1 = spawn_ingredient(env, "ham", SE3(-0.99, 0.34, 1.01))
+# ham2 = spawn_ingredient(env, "ham", SE3(-1.03, 0.14, 1.01))
+# lettuce1 = spawn_ingredient(env, "lettuce", SE3(-1.01, 0.25, 1.04)@ SE3.Rz(pi/2))
+# lettuce2 = spawn_ingredient(env, "lettuce", SE3(-1.03, 0.27, 1.04)@ SE3.Rz(-pi/2))
+# tomato1 = spawn_ingredient(env, "tomato", SE3(-0.98, 0.34, 1.04))
+# tomato2 = spawn_ingredient(env, "tomato", SE3(-1.03, 0.24, 1.04))
+# tomato3 = spawn_ingredient(env, "tomato", SE3(-0.98, 0.14, 1.04))
+# bread_top = spawn_ingredient(env, "bread_top", SE3(-0.7, 0.25, 1.0))
 
 def spawn_pile(env, ingredient, n=8, center=(0, 0, 0), 
                dx_range=(-0.05, 0.05), dy_range=(-0.05, 0.05), dz_step=0.003, dz_jitter=(-0.001, 0.001)):
@@ -320,6 +325,64 @@ beetroot_pile = spawn_pile(
 #     env.step(0)
 #     time.sleep(0.05)
 
+
+# for i in range(1):
+#     env.step(5)
+#     pick_pose = SE3(-0.7, 0.4, 1.0)
+#     place_pose = SE3(-1, 0.25, 1.04)
+
+#     # Define gripper orientation to down
+#     gripper_down_orientation = SE3.Rx(pi)
+
+#     # Find the safe poses above pick and place locations
+#     safe_pose_above_pick = pick_pose * SE3.Trans(0, 0, 0.13) * gripper_down_orientation
+#     safe_pose_above_place = place_pose * SE3.Trans(0, 0, 0.13) * gripper_down_orientation
+
+#     # Poses above the brick for picking and placing, factor in brick height
+#     pick_pose_above_brick = pick_pose * SE3.Trans(0, 0, 0.1) * gripper_down_orientation
+#     place_pose_above_brick = place_pose * SE3.Trans(0, 0, 0.1) * gripper_down_orientation
+
+#     # This is here to help force the base of the robot to be in the centre as it has had issues with reaching the limit and breaking
+#     #Initial guess for IK based on pick and place positions, elbow bent up, away from floor
+#     q0_pick  = np.array([pi, 0, pi/2, 0, 0, 0])
+#     q0_place = np.array([pi, 0, pi/2, 0, 0, 0])
+
+#     # IK for safe poses
+#     sol_safe_pick = XArm.ikine_LM(safe_pose_above_pick, q0=q0_pick)
+#     sol_safe_place = XArm.ikine_LM(safe_pose_above_place, q0=q0_place)
+#     # Clip joint values to enforce limits
+#     q_safe_pick = np.clip(sol_safe_pick.q, XArm.qlim[0], XArm.qlim[1])
+#     q_safe_place = np.clip(sol_safe_place.q, XArm.qlim[0], XArm.qlim[1])
+
+#     # Repeat above for pick and place poses
+#     sol_pick = XArm.ikine_LM(pick_pose_above_brick, q0=q_safe_pick)
+#     sol_place = XArm.ikine_LM(place_pose_above_brick, q0=q_safe_place)
+#     q_pick = np.clip(sol_pick.q, XArm.qlim[0], XArm.qlim[1])
+#     q_place = np.clip(sol_place.q, XArm.qlim[0], XArm.qlim[1])
+
+#     # Define the trajectories between the key poses
+#     trajectory_pairs = [
+#         (XArm.q, q_safe_pick),        #0
+#         (q_safe_pick, q_pick),        #1
+#         (q_pick, q_safe_pick),        #2
+#         (q_safe_pick, q_safe_place),  #3
+#         (q_safe_place, q_place),      #4
+#         (q_place, q_safe_place),      #5
+#         (q_safe_place, XArm.q)        #6
+#     ]
+
+#     # Execute each trajectory segment
+#     for idx, (q_start, q_end) in enumerate(trajectory_pairs):
+#         traj = rtb.jtraj(q_start, q_end, 75)
+#         for q in traj.q:
+#             q_clipped = np.clip(q, XArm.qlim[0], XArm.qlim[1])
+#             XArm.q = q_clipped
+#             ee_pose = XArm.fkine(XArm.q)
+#             env.step(0.01)
+
+#             # Update bread_top mesh pose during carrying motion segments
+#             if idx in [2, 3, 4]: 
+#                 bread_top.T = ee_pose @ SE3.Ry(pi) @ SE3.Trans(0, 0, -0.1)
 
 
 env.hold()
