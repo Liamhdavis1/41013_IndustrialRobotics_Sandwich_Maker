@@ -56,16 +56,24 @@ class Cobot320(DHRobot3D):
         scale = 0.2  # slightly smaller than 0.2 to fix subtle drift
 
         # scaled link parameters
-        a = [0, 1.1 * scale, 1.0 * scale, 0, 0, 0]
-        d = [1.75 * scale, 0, 0, 0.72 * scale, -0.78 * scale, 1.0655 * scale]
+        a_unscaled = [0, 1.1, 1.0, 0, 0, 0]
+        d_unscaled = [1.75, 0, 0, 0.72, -0.78, 1.0655]
+        a = [x * scale for x in a_unscaled]
+        d = [x * scale for x in d_unscaled]
+
 
         # sometimes the last alpha sign causes orientation drift
-        alpha = [pi/2, 0, 0, pi/2, -pi/2, 0]
+        # alpha = [pi/2, 0, 0, pi/2, -pi/2, 0]
+        alpha = [-pi/2, pi/2, 0, pi/2, pi/2, -pi]
 
         # offset tweaks: shifting the base and wrist alignment
-        offset = [0, pi/2, 0, -pi/2, pi, 0]
+        # offset = [0, pi/2, 0, -pi/2, pi, 0]
+        offset = [pi/2, pi/2, 0, -pi/2, pi, -pi/2]
+        
+        
+        qlim = [[-pi / 2, pi / 2] for _ in range(6)]
 
-        qlim = [[-pi, pi] for _ in range(6)]
+        # qlim = [[-pi, pi] for _ in range(6)]
 
     # def _create_DH(self):
     #     links = []
