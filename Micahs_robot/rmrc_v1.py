@@ -6,6 +6,7 @@ import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
 import time
+from roboticstoolbox import jtraj
 
 import swift
 from spatialmath.base import transl, rpy2tr, tr2rpy
@@ -14,7 +15,6 @@ from math import pi
 
 # Import the ABB IRB120 robot model
 from Robot_info.abb_irb_120 import abb_irb_120
-from Assignment2Control import Assignment2Control
 
 
 
@@ -32,8 +32,81 @@ class SimplifiedRMRC:
         self.W = np.diag([1, 1, 1, 0.1, 0.1, 0.1]) # Weighting matrix for velocity vector
         
         # Initialize Assignment2Control for IK solving
-        self.ik_solver = Assignment2Control()
         
+    def execute_trajectory(self, robot, env, q_start, q_end, steps=50):
+        """
+        Execute smooth joint-space trajectory between q_start and q_end using jtraj.
+        Updates robot in Swift environment each step.
+        """
+        traj = jtraj(q_start, q_end, steps)
+        checkpoint_interval = max(1, steps // 5)
+
+        for step_idx, q in enumerate(traj.q):
+            if step_idx % checkpoint_interval == 0 or step_idx == 1 or step_idx == len(traj.q) - 1:
+                ee_pose = robot.fkine(q)
+                print(f"Step {step_idx}/{len(traj.q) - 1}: EE @ {ee_pose.t.round(3)} (m)")
+            robot.q = q
+            env.step(0.01)
+        
+
+    def enforce_joint_limits(self, q, qlim):
+        return np.clip(q, qlim[0, :], qlim[1, :])
+
+    def pose_error_mm(self, T_actual, T_target):
+        return float(np.linalg.norm(T_actual.t - T_target.t) * 1000.0)
+
+    def generate_initial_guesses(self, robot, q_current):
+        guesses = []
+        guesses.append(q_current.copy())           # current
+        guesses.append(np.zeros(robot.n))           # zero position
+        for _ in range(3):                          # random within limits
+            q_rand = np.random.uniform(robot.qlim[0, :], robot.qlim[1, :])
+            guesses.append(q_rand)
+        if hasattr(robot, 'qr'):
+            guesses.append(robot.qr)                # home position
+        return guesses
+
+    def solve_ik_robust(self, robot, target_pose, q_current):
+        qlim = robot.qlim
+        tol = 1e-6
+        # Try initial guess
+        ik_result = robot.ikine_LM(
+            target_pose,
+            q0=q_current,
+            mask=[1, 1, 1, 1, 1, 1],
+            ilimit=2000,
+            slimit=10,
+            tol=tol,
+            joint_limits=True
+        )
+        if ik_result.success:
+            q_solution = self.enforce_joint_limits(ik_result.q, qlim)
+            error = self.pose_error_mm(robot.fkine(q_solution), target_pose)
+            if error <= 5.0:
+                return q_solution, True, error
+
+        # Try multiple guesses
+        guesses = self.generate_initial_guesses(robot, q_current)
+        for i, q0 in enumerate(guesses):
+            ik_result = robot.ikine_LM(
+                target_pose,
+                q0=q0,
+                mask=[1, 1, 1, 1, 1, 1],
+                ilimit=2000,
+                slimit=3,
+                tol=tol,
+                joint_limits=True
+            )
+            if ik_result.success:
+                q_solution = self.enforce_joint_limits(ik_result.q, qlim)
+                error = self.pose_error_mm(robot.fkine(q_solution), target_pose)
+                if error <= 5.0:
+                    return q_solution, True, error
+
+        return q_current, False, float('inf')
+                            
+
+
     def run_rmrc_demo(self):
         """
         Main demo function following lab structure
@@ -79,20 +152,27 @@ class SimplifiedRMRC:
         
         # 4) Solve initial configuration using IK
         T_start = SE3(transl(x[:, 0]) @ rpy2tr(theta[0, 0], theta[1, 0], theta[2, 0]))
-        q_start, ik_success, ik_error = self.ik_solver.solve_ik_robust(robot, T_start, robot.q)
-        
+        q_start, ik_success, ik_error = self.solve_ik_robust(robot, T_start, robot.q)
+
         if not ik_success or ik_error > 5.0:
             print(f"Initial IK failed! Error: {ik_error:.1f}mm")
             env.close()
             return
-            
+
+        print(f"Initial configuration solved. Error: {ik_error:.1f}mm")
+        print(f"Initial joint angles (deg): {np.degrees(q_start)}")
+
+        # Use jtraj for a smooth transition
+        q_current = robot.q.copy()              # current joint values
+        self.execute_trajectory(robot, env, q_current, q_start, steps=50)
+
+        # Once motion is complete, set starting config & prepare arrays
         q_matrix[0, :] = q_start
         robot.q = q_start
         env.step()
-        print(f"Initial configuration solved. Error: {ik_error:.1f}mm")
-        print(f"Initial joint angles (deg): {np.degrees(q_start)}")
-        
-        time.sleep(1)  # Brief pause
+        time.sleep(1)
+
+
         
         # 5) RMRC trajectory tracking (following lab methodology)
         for i in range(self.steps-1):
@@ -159,7 +239,8 @@ class SimplifiedRMRC:
                         f"Target={np.array2string(x[:, i+1], precision=3)}, "
                         f"Actual={np.array2string(actual_pos, precision=3)}, "
                         f"Error={error_norm*1000:.1f}mm, "
-                        f"Manip={float(m[i]):.3f}"
+                        f"Manip={m[i,0]:.3f}"
+
                     )
 
         

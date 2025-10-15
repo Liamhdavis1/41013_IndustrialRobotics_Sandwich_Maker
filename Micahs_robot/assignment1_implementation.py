@@ -13,8 +13,7 @@ from roboticstoolbox import jtraj
 from spatialmath import SE3
 
 from Robot_info.abb_irb_120 import abb_irb_120
-
-class Assignment2Control:
+class assignment1_implementation:
 
     def __init__(self):
         # Add this line: default IK solver tolerance (e.g. 1e-6 is typical)
@@ -197,7 +196,7 @@ def run_demo():
     initial_positions = None
     goal_positions = None
 
-    mover = Assignment2Control()
+    mover = assignment1_implementation()
     mover.move_between_positions(robot, env, manager, initial_positions, goal_positions)
 
     input("Press Enter to exit and close Swift...")
