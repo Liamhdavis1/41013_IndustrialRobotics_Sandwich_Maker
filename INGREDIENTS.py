@@ -8,16 +8,23 @@ import os
 import time
 from math import pi
 from Lilys_robot.XArm6 import XArm6
+from ir_support.robots import UR3
 
 # --- Setup environment ---
 env = swift.Swift()
 env.launch(realtime=True)
 
-current_path = os.path.abspath(os.path.dirname(__file__))
-
+# ----robots -------
+UR3 = UR3()
 XArm = XArm6()
-XArm.base = SE3(-0.7,0.1,1)
-# XArm.add_to_env(env)
+# Cobot = Cobot320()
+# UR3.base = SE3(0.75,0.5,1)
+# UR3.add_to_env(env)
+
+XArm.base = SE3(1, 0.15, 1)
+XArm.add_to_env(env)
+
+current_path = os.path.abspath(os.path.dirname(__file__))
 
 # --- Ingredient definitions  ---
 INGREDIENTS = {
@@ -100,7 +107,6 @@ spawned_meshes = {}
 
 # --- Function to spawn any ingredient with a unique name and pose ---
 def spawn_ingredient(env, name, pose):
-    """Create a new mesh instance from the INGREDIENTS list."""
     info = INGREDIENTS[name]
     mesh = Mesh(
         filename=info["path"],
@@ -115,6 +121,7 @@ def spawn_ingredient(env, name, pose):
 # --- Example spawns ---
 bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
 glass =spawn_ingredient(env, "glass", SE3(0, 0, 0))
+bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(1.2,0.4,1) @ SE3.Rz(pi/2))
 # bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, 0.25, 1))
 # ham1 = spawn_ingredient(env, "ham", SE3(-0.99, 0.34, 1.01))
 # ham2 = spawn_ingredient(env, "ham", SE3(-1.03, 0.14, 1.01))
@@ -127,26 +134,6 @@ glass =spawn_ingredient(env, "glass", SE3(0, 0, 0))
 
 def spawn_pile(env, ingredient, n=8, center=(0, 0, 0), 
                dx_range=(-0.05, 0.05), dy_range=(-0.05, 0.05), dz_step=0.003, dz_jitter=(-0.001, 0.001)):
-    """
-    Spawns a 'pile' of any ingredient with configurable scatter.
-
-    Parameters
-    ----------
-    env : swift.Swift
-        The Swift environment.
-    ingredient : str
-        Ingredient key from the INGREDIENTS dict.
-    n : int
-        Number of items in the pile.
-    center : tuple (x, y, z)
-        Center position for the pile.
-    dx_range, dy_range : tuple
-        Random scatter range in X and Y directions.
-    dz_step : float
-        Vertical step between layers (controls how close they are).
-    dz_jitter : tuple
-        Random jitter range added to the Z height for natural stacking.
-    """
     x0, y0, z0 = center
     pile = []
     for i in range(n):
@@ -246,6 +233,67 @@ beetroot_pile = spawn_pile(
     dz_step=0.002,
     dz_jitter=(-0.05, 0.05)
 )
+
+
+#===================================================================
+#                         MAKE SANWICH 
+#==================================================================
+# def move_slice(env, slice_mesh, start_pose=None, end_pose=None, steps=40, delay=0.03):
+#     if start_pose is None:
+#         start_pose = slice_mesh.T  # get current transform
+
+#     for alpha in np.linspace(0, 1, steps):
+#         # Interpolate between start and end SE3 transforms
+#         slice_mesh.T = end_pose
+#         env.step(0)
+#         time.sleep(delay)
+
+# # Select one slice (e.g., third slice in the ham pile)
+# ham_move = ham_pile[2]
+# move_slice(env, ham_move, ham_move.T, SE3(1.0, 0.15, 1.03))
+steps = 50
+start = ham_pile[0].T
+target = bread_bottom.T
+q0 = np.zeros(6)
+q_pick = XArm.ikine_LM(ham_pile[0].T, q0=q0).q
+for q in rtb.jtraj(XArm.q, q_pick, steps).q:
+    XArm.q = q
+    env.step(0.05)
+# print(ham_pile[0].T)
+
+# lift_pose = SE3(start.t[0], start.t[1], start.t[2]+0.1)
+# q_lift = XArm.ikine_LM(lift_pose, q0=q_pick).q
+# for q in rtb.jtraj(XArm.q, q_lift, steps).q:
+#     XArm.q = q
+#     env.step(0.05)
+
+# # Move to place pose
+# q_place = XArm.ikine_LM(target, q0=q_lift).q
+# for q in rtb.jtraj(XArm.q, q_place, steps).q:
+#     XArm.q = q
+#     ham_pile[0].T = XArm.fkine(q)  # move brick with robot
+#     env.step(0.05)
+
+# # Lower brick
+# lower_pose = SE3(target.t[0], target.t[1], target.t[2])
+# q_lower = XArm.ikine_LM(lower_pose, q0=q_place).q
+# for q in rtb.jtraj(XArm.q, q_lower, steps).q:
+#     XArm.q = q
+#     ham_pile[0].T = XArm.fkine(q)
+#     env.step(0.05)
+
+# # Move robot away
+# q_safe = np.zeros(6)
+# for q in rtb.jtraj(XArm.q, q_safe, steps).q:
+#     XArm.q = q
+#     env.step(0.05)
+# lettuce_slice = lettuce_pile[1]
+# move_slice(env, lettuce_slice, lettuce_slice.T, SE3(-1.03, -0.27, 1.28))
+
+# tomato_slice = tomato_pile[0]
+# move_slice(env, tomato_slice, tomato_slice.T, SE3(-0.98, -0.24, 1.30))
+
+
 # slice_to_move = ham_pile[2].t  # e.g., third slice
 # start_z = slice_to_move[2]  # get starting height
 # for z in np.linspace(start_z, 1.2, 20):
