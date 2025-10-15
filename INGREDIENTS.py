@@ -28,6 +28,7 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 
 XArm = XArm6()
 XArm.base = SE3(-0.7,0.1,1)
+
 # XArm.add_to_env(env)
 
 # --- Ingredient definitions  ---

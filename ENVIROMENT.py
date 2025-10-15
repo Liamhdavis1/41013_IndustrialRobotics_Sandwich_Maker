@@ -14,6 +14,7 @@ from Liams_robot.Cobot320 import Cobot320
 # from Micahs_robot.A2.Veggie_Robot_B.abb_irb_120 import VeggieRobotAbb_irb120
 from ir_support import UR3
 from math import pi
+from Micahs_robot.abb_irb_120 import abb_irb_120
 # from ir_support.robots import XArm6
 
 
@@ -22,6 +23,7 @@ env.launch(realtime=True)
 
 UR3 = UR3()
 XArm = XArm6()
+irb = abb_irb_120()
 # Cobot = Cobot320()
 # IRB = VeggieRobotAbb_irb120() 
 
@@ -31,6 +33,8 @@ XArm = XArm6()
 XArm.base = SE3(0.95,0.35,0.8)
 XArm.add_to_env(env)
 
+irb.base = SE3(0.55,0.5,0.8)
+irb.add_to_env(env)
 # Cobot.base = SE3(-0.75,0.5,1)
 # Cobot.add_to_env(env)
 
