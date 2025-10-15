@@ -34,20 +34,23 @@ def detect_ellipsoid_collisions(ellipsoid_robot):
     return collisions
 
 # ------- Teach Mode with Ellipsoid Collision Detection -------
-def teach_with_collisions(robot, ellipsoid_robot, fig):
+def teach_with_collisions(XArm, ellipsoid_robot, fig):
     print("Ellipsoid teach mode started! Move robot via GUI if supported.")
-
     # Callback triggered when robot configuration changes
-    def on_update(q):
-        robot.q = q
-        ellipsoid_robot.ellipsoid_for_robot_links(q)
+    def on_update(*args):
+        q_vec = XArm.q  # Use current robot joint angles stored internally
+        ellipsoid_robot.ellipsoid_for_robot_links(q_vec)
         ellipsoid_robot.plot_ellipsoids()
         collisions = detect_ellipsoid_collisions(ellipsoid_robot)
         if collisions:
             print(f"Collision detected between links: {collisions}")
         else:
             print("No collisions.")
-        fig.step(0.01)  # update visualization
+        fig.step(0.01)
+
+
+
+
 
     ellipsoid_robot.teach(on_update=on_update)
 

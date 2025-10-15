@@ -23,25 +23,25 @@ class Cobot320(DHRobot3D):
         )
 
         qtest = [0, 0, 0, 0, 0, 0]
-        qtest_transforms = [
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2))
-        ]
-
         # qtest_transforms = [
-        #     spb.transl(0, 0, 0),                     
-        #     spb.transl(0, 0, 0),                
-        #     spb.transl(0, 0, 0),                
-        #     spb.transl(0, 0, 0),
-        #     spb.transl(0, 0, 0),
-        #     spb.transl(0, 0, 0),
-        #     spb.transl(0, 0, 0)
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2))
         # ]
+
+        qtest_transforms = [
+            spb.transl(0, 0, 0),                     
+            spb.transl(0, 0, 0),                
+            spb.transl(0, 0, 0),                
+            spb.transl(0, 0, 0),
+            spb.transl(0, 0, 0),
+            spb.transl(0, 0, 0),
+            spb.transl(0, 0, 0)
+        ]
 
         current_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -63,12 +63,12 @@ class Cobot320(DHRobot3D):
 
 
         # sometimes the last alpha sign causes orientation drift
-        # alpha = [pi/2, 0, 0, pi/2, -pi/2, 0]
-        alpha = [-pi/2, pi/2, 0, pi/2, pi/2, -pi]
+        alpha = [pi/2, 0, 0, pi/2, -pi/2, 0]
+        # alpha = [-pi/2, pi/2, 0, pi/2, pi/2, -pi]
 
         # offset tweaks: shifting the base and wrist alignment
-        # offset = [0, pi/2, 0, -pi/2, pi, 0]
-        offset = [pi/2, pi/2, 0, -pi/2, pi, -pi/2]
+        offset = [0, pi/2, 0, -pi/2, pi, 0]
+        # offset = [pi/2, pi/2, 0, -pi/2, pi, -pi/2]
         
         
         qlim = [[-pi / 2, pi / 2] for _ in range(6)]
