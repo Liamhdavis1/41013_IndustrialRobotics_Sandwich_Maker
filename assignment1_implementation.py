@@ -12,7 +12,7 @@ import roboticstoolbox as rtb
 from roboticstoolbox import jtraj
 from spatialmath import SE3
 
-from Robot_info.abb_irb_120 import abb_irb_120
+from Micahs_robot.abb_irb_120 import abb_irb_120
 class assignment1_implementation:
 
     def __init__(self):
