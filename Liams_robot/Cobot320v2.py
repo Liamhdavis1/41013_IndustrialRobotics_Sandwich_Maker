@@ -60,10 +60,10 @@ class Cobot320(DHRobot3D):
         d = [1.75 * scale, 0, 0, 0.72 * scale, -0.78 * scale, 1.0655 * scale]
 
         # sometimes the last alpha sign causes orientation drift
-        alpha = [pi/2, 0, 0, pi/2, -pi/2, 0]
+        alpha = [pi/2, 0, 0, pi/2, pi/2, -pi]
 
         # offset tweaks: shifting the base and wrist alignment
-        offset = [0, pi/2, 0, -pi/2, pi, 0]
+        offset = [0, pi/2, 0, -pi/2, pi, -pi/2]
 
         qlim = [[-pi, pi] for _ in range(6)]
 
