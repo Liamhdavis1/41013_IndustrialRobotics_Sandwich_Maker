@@ -23,13 +23,13 @@ class abb_irb_120(DHRobot3D):
 
         # Names of the robot link files in the directory
         link3D_names = dict(
-            link0='base_link',
-            link1='link_1',
-            link2='link_2',
-            link3='link_3',
-            link4='link_4',
-            link5='link_5',
-            link6='link_6'
+            link0='Robot_info/base_link',
+            link1='Robot_info/link_1',
+            link2='Robot_info/link_2',
+            link3='Robot_info/link_3',
+            link4='Robot_info/link_4',
+            link5='Robot_info/link_5',
+            link6='Robot_info/link_6'
         )
 
         # A joint config and the 3D object transforms to match that config
