@@ -72,22 +72,19 @@ class Parol6(DHRobot3D):
         self.q = self._qtest
         self.add_to_env(env)
 
-<<<<<<< HEAD
-        q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
-        qtraj = rtb.jtraj(self.q, q_goal, 50).q
-        fig = self.plot(self.q)
-        input("delay")
-=======
+        # q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
+        # qtraj = rtb.jtraj(self.q, q_goal, 50).q
+        # fig = self.plot(self.q)
+        # input("delay")
         q_goal  = [
             self.q[0],
             self.q[1],
             self.q[2],
             self.q[3],
-            self.q[4] +pi,
+            self.q[4]+pi,
             self.q[5],
         ]
         qtraj = rtb.jtraj(self.q, q_goal, 150).q
->>>>>>> 7cc92dd9ce1b754c535edaa3c7854ea060ae84b3
 
         fig = self.plot(self.q, limits= [-1,1,-1,1,-1,1])
         fig._add_teach_panel(self, self.q)
