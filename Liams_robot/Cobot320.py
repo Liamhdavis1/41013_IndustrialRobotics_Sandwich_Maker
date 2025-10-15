@@ -72,11 +72,14 @@ class Cobot320(DHRobot3D):
 
         q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
         qtraj = rtb.jtraj(self.q, q_goal, 50).q
+        fig = self.plot(self.q)
+        input("delay")
 
         for q in qtraj:
             self.q = q
             env.step(0.02)
-
+            fig.step(0.01)
+            
         env.hold()
         time.sleep(3)
 

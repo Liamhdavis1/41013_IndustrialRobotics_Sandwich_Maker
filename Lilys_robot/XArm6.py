@@ -15,15 +15,37 @@ class XArm6(DHRobot3D):
         links = self._create_DH()
 
         # STL/visual names (placeholders)
+        # link3D_names = dict(
+        #     link0='XArm6/base0',
+        #     link1='XArm6/link1',
+        #     link2='XArm6/link2',
+        #     link3='XArm6/link3',
+        #     link4='XArm6/link4',
+        #     link5='XArm6/link5',
+        #     link6='XArm6/link6'
+        # )
+
+        def safe_color(c):
+            return tuple(float(x) for x in c)
+
         link3D_names = dict(
-            link0='XArm6/base0',
-            link1='XArm6/link1',
-            link2='XArm6/link2',
-            link3='XArm6/link3',
-            link4='XArm6/link4',
-            link5='XArm6/link5',
-            link6='XArm6/link6'
+            link0='XArm6/base0', color0=safe_color((1,1,1,1)),
+            link1='XArm6/link1', color1=safe_color((1,1,1,1)),
+            link2='XArm6/link2', color2=safe_color((1,1,1,1)),
+            link3='XArm6/link3', color3=safe_color((1,1,1,1)),
+            link4='XArm6/link4', color4=safe_color((1,1,1,1)),
+            link5='XArm6/link5', color5=safe_color((1,1,1,1)),
+            link6='XArm6/link6', color6=safe_color((1,1,1,1))
         )
+        #link3D_names = dict(
+        #     link0='XArm6/base0', color0 = (1,1,1,1),
+        #     link1='XArm6/link1', color1 = (1,1,1,1),
+        #     link2='XArm6/link2', color2 = (1,1,1,1),
+        #     link3='XArm6/link3', color3 = (1,1,1,1),
+        #     link4='XArm6/link4', color4 = (1,1,1,1),
+        #     link5='XArm6/link5', color5 = (1,1,1,1),
+        #     link6='XArm6/link6', color6 = (1,1,1,1)
+        # )
         # Test configuration
         # qtest = [pi, 0, -pi/2, 0, 0, 0]
         qtest = [0, 0, 0, 0, 0, 0]

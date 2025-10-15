@@ -23,25 +23,25 @@ class Cobot320(DHRobot3D):
         )
 
         qtest = [0, 0, 0, 0, 0, 0]
-        # qtest_transforms = [
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
-        #     spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2))
-        # ]
-
         qtest_transforms = [
-            spb.transl(0, 0, 0),                     
-            spb.transl(0, 0, 0),                
-            spb.transl(0, 0, 0),                
-            spb.transl(0, 0, 0),
-            spb.transl(0, 0, 0),
-            spb.transl(0, 0, 0),
-            spb.transl(0, 0, 0)
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2)),
+            spb.transl(0, 0, 0) @ spb.r2t(spb.rotz(pi / 2))
         ]
+
+        # qtest_transforms = [
+        #     spb.transl(0, 0, 0),                     
+        #     spb.transl(0, 0, 0),                
+        #     spb.transl(0, 0, 0),                
+        #     spb.transl(0, 0, 0),
+        #     spb.transl(0, 0, 0),
+        #     spb.transl(0, 0, 0),
+        #     spb.transl(0, 0, 0)
+        # ]
 
         current_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -53,7 +53,7 @@ class Cobot320(DHRobot3D):
 
     def _create_DH(self):
         links = []
-        scale = 0.2  # slightly smaller than 0.2 to fix subtle drift
+        scale = 0.1  # slightly smaller than 0.2 to fix subtle drift
 
         # scaled link parameters
         a_unscaled = [0, 1.1, 1.0, 0, 0, 0]
@@ -97,10 +97,13 @@ class Cobot320(DHRobot3D):
 
         q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
         qtraj = rtb.jtraj(self.q, q_goal, 50).q
+        fig = self.plot(self.q)
+        input("delay")
 
         for q in qtraj:
             self.q = q
             env.step(0.02)
+            fig.step(0.01)
 
         env.hold()
         time.sleep(3)
