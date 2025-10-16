@@ -9,7 +9,7 @@ from math import pi
 from Micahs_robot.abb_irb_120 import abb_irb_120
 from Lilys_robot.XArm6 import XArm6
 from ir_support.robots import UR3
-from FoodOrderRobot import FoodOrderRobot
+from FoodOrderRobotv1 import FoodOrderRobotv1
 
 def setup_environment():
     env = swift.Swift()
@@ -150,8 +150,11 @@ def spawn_all_piles(env):
     piles["beetroot"] = spawn_pile(env, "beetroot", 15, (-0.25, -0.1, 0.92), (-0.1, 0.1), (-0.02, 0.02), 0.002, (-0.05, 0.05))
     return piles
 
-def collect_veggie_locations(piles):
+def collect_veggie_locations_and_meshes(piles):
+    """Collect both positions and mesh objects from ingredient piles"""
     food_locations = []
+    food_meshes = []
+    
     for ingredient_name in ['lettuce', 'tomato', 'cucumber', 'beetroot']:
         pile_list = piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
@@ -159,7 +162,8 @@ def collect_veggie_locations(piles):
             pose_se3 = SE3(mesh.T)
             pos = pose_se3.t
             food_locations.append([pos[0], pos[1], pos[2]])
-    return food_locations
+            food_meshes.append(mesh)  # Add the actual mesh object!
+    return food_locations, food_meshes
 
 def main():
     env = setup_environment()
@@ -176,18 +180,19 @@ def main():
     env.step()
     
     # Create a custom FoodOrderRobot that uses external env and robot
-    micahs_robot = FoodOrderRobot(robot=irb_robot, env=env)
+    micahs_robot = FoodOrderRobotv1(robot=irb_robot, env=env)
     
     # Prepare a smaller list of ingredient pick locations (first 2 from each pile)
-    micahs_food_locations = collect_veggie_locations(piles)
-    
+    micahs_food_locations, micahs_food_meshes = collect_veggie_locations_and_meshes(piles)
+
     # Define the assembly station location
     micahs_station_location = [-0.4, 0.2, 1]
     
     print(f"Found {len(micahs_food_locations)} ingredients to process")
+    print(f"Found {len(micahs_food_meshes)} mesh objects")
     
     # Run the food order processing task
-    micahs_robot.process_food_order(micahs_food_locations, micahs_station_location)
+    micahs_robot.process_food_order(micahs_food_locations, micahs_station_location, mesh_list=micahs_food_meshes)
 
 if __name__ == "__main__":
     main()
