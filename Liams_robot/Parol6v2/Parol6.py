@@ -20,8 +20,8 @@ class Parol6(DHRobot3D):
             link2='link2',
             link3='link3',
             link4='link4',
-            link5='link5',
-            link6='link6'
+            link5='link5.stlv2',
+            link6='link6.stlv2'
         )
 
         qtest = [0, 0, 0, 0, 0, 0]
@@ -72,12 +72,16 @@ class Parol6(DHRobot3D):
         self.q = self._qtest
         self.add_to_env(env)
 
+        # q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
+        # qtraj = rtb.jtraj(self.q, q_goal, 50).q
+        # fig = self.plot(self.q)
+        # input("delay")
         q_goal  = [
             self.q[0],
             self.q[1],
             self.q[2],
             self.q[3],
-            self.q[4] +pi,
+            self.q[4]+pi,
             self.q[5],
         ]
         qtraj = rtb.jtraj(self.q, q_goal, 150).q
