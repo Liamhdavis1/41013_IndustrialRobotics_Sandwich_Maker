@@ -1,25 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
+from sandwich import Sandwich  # Import the Sandwich class
+
+def ingredient_clicked(Sandwiches):
+    print("Button clicked:", Sandwiches)
+    # Use the bread object to make sandwich based on choice
+    bread.Make_Sandwich(Sandwiches)
 
 root = tk.Tk()
 root.title("Ingredients Selector")
 
-ingredients_frame = ttk.LabelFrame(root, text="Sandwich Ingredients")
-ingredients_frame.pack(pady=10, ipadx=10, padx=10)
+sandwich_frame = ttk.LabelFrame(root, text="What sandwich would you like?")
+sandwich_frame.pack(pady=10, ipadx=10, padx=10)
 
-ingredients = ["ham", "lettuce", "tomato", "salami", "beef", "chicken", "cucumber", "beetroot"]
-ingredient_vars = {}
+Sandwiches = ["Classic", "Mediteranian", "Italian", "Beef & Beetroot", "Smokey Chicken", "Veggie"]
 
-for i, ing in enumerate(ingredients):
-    var = tk.IntVar()
-    chk = ttk.Checkbutton(ingredients_frame, text=ing, variable=var)
-    chk.grid(row=i//2, column=i%2, sticky=tk.W, padx=10, pady=5)
-    ingredient_vars[ing] = var
+bread = Sandwich()
 
-make_sandwich = ttk.Button(root, text="Make Sandwich")
-make_sandwich.pack(pady=10, ipadx=10, padx=10)
-
-# plain_text_label = ttk.Label(root, text="Select your ingredients and build your sandwich!")
-# plain_text_label.pack(pady=5)
+for i, ing in enumerate(Sandwiches):
+    btn = ttk.Button(sandwich_frame, text=ing, width=20,
+                     command=lambda ing=ing: ingredient_clicked(ing))
+    btn.grid(row=i//2, column=i%2, sticky=tk.W, padx=10, pady=5)
 
 root.mainloop()

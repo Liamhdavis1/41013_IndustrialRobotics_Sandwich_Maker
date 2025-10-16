@@ -14,7 +14,6 @@ from spatialmath import SE3
 from math import pi
 
 # Import the ABB IRB120 robot model
-# from Robot_info.abb_irb_120 import abb_irb_120
 from Micahs_robot.abb_irb_120 import abb_irb_120
 
 

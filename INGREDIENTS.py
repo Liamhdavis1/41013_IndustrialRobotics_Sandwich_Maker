@@ -10,37 +10,27 @@ from math import pi
 from Lilys_robot.XArm6 import XArm6
 from Micahs_robot.abb_irb_120 import abb_irb_120
 from ir_support.robots import UR3
+from Micahs_robot.abb_irb_120 import abb_irb_120
 
 # --- Setup environment ---
 env = swift.Swift()
 env.launch(realtime=True)
 
 # ----robots -------
-# UR3 = UR3()
-# XArm = XArm6()
+UR3 = UR3()
+XArm = XArm6()
 # Cobot = Cobot320()
 # UR3.base = SE3(0.75,0.5,1)
 # UR3.add_to_env(env)
 
-# XArm.base = SE3(1, 0.15, 1)
-# XArm.add_to_env(env)
+XArm.base = SE3(1, 0.15, 1)
+XArm.add_to_env(env)
 
 current_path = os.path.abspath(os.path.dirname(__file__))
 
-UR3 = UR3()
 XArm = XArm6()
-irb = abb_irb_120()
-# Cobot = Cobot320()
+XArm.base = SE3(-0.7,0.1,1)
 
-
-UR3.base = SE3(1.75,0.2,1)
-UR3.add_to_env(env)
-
-XArm.base = SE3(0.95,0.25,1)
-XArm.add_to_env(env)
-
-irb.base = SE3(0,0.25,1) @ SE3.Rz(-pi/2)
-irb.add_to_env(env)
 # XArm.add_to_env(env)
 
 # --- Ingredient definitions  ---
