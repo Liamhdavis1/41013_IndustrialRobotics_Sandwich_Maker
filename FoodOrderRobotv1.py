@@ -210,13 +210,16 @@ class FoodOrderRobotv1:
                 continue
 
             print(f"  Moving to hover above food (IK+jtraj)...")
-            self.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=mesh)
+            self.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
             
             print(f"  Picking up ingredient {i+1} (RMRC down)...")
-            self.rmrc_vertical_movement(robot, env, hover_above_food, food_pos, tool_orientation, mesh=mesh)
+            self.rmrc_vertical_movement(robot, env, hover_above_food, food_pos, tool_orientation, mesh=None)
+
+            print(f"  Attaching mesh {i} to end effector...")
+            attached_mesh = mesh
             
             print(f"  Lifting ingredient {i+1} (RMRC up)...")
-            self.rmrc_vertical_movement(robot, env, food_pos, hover_above_food, tool_orientation, mesh=mesh)
+            self.rmrc_vertical_movement(robot, env, food_pos, hover_above_food, tool_orientation, mesh=attached_mesh)
             
             # Station hover
             hover_above_station = [station_location[0], station_location[1], station_location[2] + self.hover_height]
@@ -227,17 +230,17 @@ class FoodOrderRobotv1:
                 continue
 
             print(f"  Moving to hover above station (IK+jtraj)...")
-            self.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=mesh)
+            self.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh)
             
             print(f"  Placing ingredient {i+1} at station (RMRC down)...")
-            self.rmrc_vertical_movement(robot, env, hover_above_station, station_location, tool_orientation, mesh=mesh)
+            self.rmrc_vertical_movement(robot, env, hover_above_station, station_location, tool_orientation, mesh=attached_mesh)
             
             print(f"  Retracting from station (RMRC up)...")
             self.rmrc_vertical_movement(robot, env, station_location, hover_above_station, tool_orientation)
             
             # Detach mesh by stopping update (mesh left at place location)
             mesh = None
-            
+         
             print(f"  ✓ Ingredient {i+1} completed!")
         
         print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
