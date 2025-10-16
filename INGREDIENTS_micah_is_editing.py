@@ -181,7 +181,6 @@ def main():
     
     #1. Robot A does movement 
     #2. If Robot A finished, move to next robot
-    #3. Loop
 
 
     # Create a custom FoodOrderRobot that uses external env and robot

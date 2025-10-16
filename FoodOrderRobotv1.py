@@ -106,7 +106,9 @@ class FoodOrderRobotv1:
 
 
     # ========== RMRC Function for Precise Pick/Place ==========
-    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation, mesh=None, mesh_list=None, grip_offset=None):
+    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation,
+                           mesh=None, mesh_list=None, grip_offset=None,
+                           mesh_offset_along_x=-0.05, mesh_z_offsets=None):
 
         """
         Use RMRC for precise vertical movement (pick or place)
@@ -161,9 +163,22 @@ class FoodOrderRobotv1:
                 T_ee = robot.fkine(q_next)
                 mesh.T = T_ee * grip_offset
 
+            if mesh_list is not None:
+                T_ee = robot.fkine(q_next)
+                for m, z_off in zip(mesh_list, mesh_z_offsets):
+                    if m is not None:
+                        m.T = T_ee * grip_offset * SE3.Trans(mesh_offset_along_x, 0, z_off)
+
+
             env.step(self.delta_t)
             
         print(f"    RMRC completed. Final position: {robot.fkine(robot.q).t.round(3)}")
+
+    def lower_to_height(self, robot, env, start_pos, target_height, tool_orientation):
+        lowered_pos = start_pos.copy()
+        lowered_pos[2] = target_height
+        if start_pos[2] > target_height:
+            self.rmrc_vertical_movement(robot, env, start_pos, lowered_pos, tool_orientation)
 
     # ========== Main Food Order Processing Function ==========
     def process_food_order(self, food_locations, station_location, mesh_list = None):
@@ -187,13 +202,6 @@ class FoodOrderRobotv1:
 
         print(f"Processing order with {len(food_locations)} ingredients...")
         print(f"Station location: {station_location}")
-   
-        # Tool orientation (pointing downward for picking)
-        tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
-        
-        print(f"Processing order with {len(food_locations)} ingredients...")
-        print(f"Station location: {station_location}")
-        
 
         placed_meshes = []
 
@@ -273,7 +281,8 @@ class FoodOrderRobotv1:
 
         # 1. Get current EE pose and compute target offset by +0.1m in X (IK + jtraj)
         T_current = robot.fkine(robot.q)
-        T_shift_0_1 = T_current * SE3.Trans(0.1, 0, 0)
+        rpy_current = tr2rpy(T_current.A[:3, :3])
+        T_shift_0_1 = T_current * SE3(rpy2tr(*rpy_current))
         q_shift_0_1, success, error = self.solve_ik_robust(robot, T_shift_0_1, robot.q)
         if success:
             print("Moving EE by +0.1m in X using IK+jtraj...")
@@ -281,12 +290,41 @@ class FoodOrderRobotv1:
         else:
             print("Failed to reach workspace offset (+0.1m X)")
 
-        # 2. RMRC linear move +0.3m in X dragging all placed meshes
-        start_pos = T_shift_0_1.t
-        end_pos = start_pos + np.array([0.3, 0, 0])
-        print("Moving EE by +0.3m in X using RMRC dragging placed meshes...")
+        # === Insert your pushing move block here ===
 
-        self.rmrc_vertical_movement(robot, env, start_pos, end_pos, tool_orientation, mesh_list=placed_meshes)
+        # Reference base height
+        base_height = station_location[2]
+
+        # Compute vertical offsets for each mesh
+        mesh_z_offsets = []
+        for m in placed_meshes:
+            pose_se3 = SE3(m.T)
+            mesh_z_offsets.append(pose_se3.t[2] - base_height)
+        
+        push_height = current_z + 0.005  # a little above surface
+
+        T_current = robot.fkine(robot.q)
+        current_pos = T_current.t
+
+        start_pos = current_pos.copy()
+        start_pos[2] = current_pos[2]  # ensure pushing at correct height
+        start_pos[0] += 0.05        # Move EE 0.05m forward of food start
+
+        end_pos = start_pos.copy()
+        end_pos[0] -= 0.2           # Slide back by 0.3 m total from EE start point
+
+        if current_pos[2] > push_height:
+            print("Lowering EE before pushing food...")
+            self.rmrc_vertical_movement(robot, env, current_pos, start_pos, tool_orientation)
+
+        print("Moving EE with offset to push food by sliding...")
+
+        self.rmrc_vertical_movement(
+            robot, env, start_pos, end_pos, tool_orientation,
+            mesh_list=placed_meshes,
+            mesh_offset_along_x=-0.05,
+            mesh_z_offsets=mesh_z_offsets
+        )
 
         print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
         input("Press Enter to close environment...")
