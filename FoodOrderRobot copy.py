@@ -85,7 +85,7 @@ class FoodOrderRobot:
 
         return q_current, False, float('inf')
 
-    def execute_trajectory(self, robot, env, q_start, q_end, steps=50):
+    def execute_trajectory(self, robot, env, q_start, q_end, steps=50, mesh=None, grip_offset=SE3()):
         """
         Execute jtraj movement between two joint configurations
         """
@@ -97,10 +97,15 @@ class FoodOrderRobot:
                 ee_pose = robot.fkine(q)
                 print(f"    Step {step_idx}/{len(traj.q) - 1}: EE @ {ee_pose.t.round(3)} (m)")
             robot.q = q
+
+            # Update mesh position if attached
+            if mesh is not None:
+                mesh.T = robot.fkine(q) * grip_offset
+                
             env.step(0.01)
 
     # ========== RMRC Function for Precise Pick/Place ==========
-    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation):
+    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation, mesh=None, grip_offset=SE3()):
         """
         Use RMRC for precise vertical movement (pick or place)
         start_pos: [x, y, z] starting position
@@ -147,12 +152,16 @@ class FoodOrderRobot:
             q_matrix[i+1, :] = q_next
             
             robot.q = q_next
+            if mesh is not None:
+                T_ee = robot.fkine(q_next)
+                mesh.T = T_ee * grip_offset
+
             env.step(self.delta_t)
             
         print(f"    RMRC completed. Final position: {robot.fkine(robot.q).t.round(3)}")
 
     # ========== Main Food Order Processing Function ==========
-    def process_food_order(self, food_locations, station_location):
+    def process_food_order(self, food_locations, station_location, mesh_list = None, mesh = None):
         """
         Main function to process food order by iterating through ingredient locations
         
