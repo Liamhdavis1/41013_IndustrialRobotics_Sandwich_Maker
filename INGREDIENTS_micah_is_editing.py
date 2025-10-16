@@ -155,7 +155,7 @@ def collect_veggie_locations_and_meshes(piles):
     food_locations = []
     food_meshes = []
     
-    for ingredient_name in ['lettuce', 'tomato', 'cucumber', 'beetroot']:
+    for ingredient_name in ['beetroot']:
         pile_list = piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
         for mesh in pile_list[:2]:
