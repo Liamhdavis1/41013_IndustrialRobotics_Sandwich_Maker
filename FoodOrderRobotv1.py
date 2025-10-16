@@ -105,72 +105,9 @@ class FoodOrderRobotv1:
             env.step(0.01)
 
 
-    def rmrc_linear_movement(self, robot, env, start_pos, end_pos, tool_orientation, mesh_list=None, grip_offset=None):
-        """
-        Use RMRC for linear movement between two positions
-        start_pos: [x, y, z] starting position
-        end_pos: [x, y, z] ending position  
-        tool_orientation: [roll, pitch, yaw] in radians
-        mesh_list: List of meshes to update during movement
-        """
-        if grip_offset is None:
-            grip_offset = self.grip_offset
-
-        print(f"    RMRC Linear: {start_pos} → {end_pos}")
-        
-        # Create trajectory arrays
-        x = np.linspace(start_pos, end_pos, self.rmrc_steps).T
-        theta = np.tile(tool_orientation, (self.rmrc_steps, 1)).T
-        
-        # Allocate arrays
-        q_matrix = np.zeros((self.rmrc_steps, 6))
-        q_matrix[0, :] = robot.q.copy()  # Start from current position
-        
-        # RMRC control loop
-        for i in range(self.rmrc_steps - 1):
-            T_now = robot.fkine(q_matrix[i, :]).A
-            delta_x = x[:, i+1] - T_now[:3, 3]
-            
-            # Orientation calculations
-            Rd = rpy2tr(*theta[:, i+1])[:3, :3]
-            Ra = T_now[:3, :3]
-            S = ((Rd - Ra) / self.delta_t) @ Ra.T
-            
-            # Velocity calculations
-            lin_vel = delta_x / self.delta_t
-            ang_vel = np.array([S[2, 1], S[0, 2], S[1, 0]])
-            xdot = self.W @ np.vstack((lin_vel[:, None], ang_vel[:, None]))
-            
-            # Jacobian and manipulability
-            J = robot.jacob0(q_matrix[i, :])
-            m = np.sqrt(linalg.det(J @ J.T))
-            m_lambda = (1 - m/self.epsilon) * 0.05 if m < self.epsilon else 0
-            
-            # Joint velocities
-            inv_J = linalg.inv(J.T @ J + m_lambda * np.eye(6)) @ J.T
-            qdot = (inv_J @ xdot).T
-            
-            # Update joints with limits
-            q_next = q_matrix[i, :] + self.delta_t * qdot
-            q_next = np.clip(q_next, robot.qlim[0], robot.qlim[1])
-            q_matrix[i+1, :] = q_next
-            
-            robot.q = q_next
-            
-            # Update all meshes in mesh_list
-            if mesh_list is not None:
-                T_ee = robot.fkine(q_next)
-                for mesh in mesh_list:
-                    if mesh is not None:  # Safety check
-                        mesh.T = T_ee * grip_offset
-
-            env.step(self.delta_t)
-            
-        print(f"    RMRC Linear completed. Final position: {robot.fkine(robot.q).t.round(3)}")
-
-
     # ========== RMRC Function for Precise Pick/Place ==========
-    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation, mesh=None, grip_offset=None):
+    def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation, mesh=None, mesh_list=None, grip_offset=None):
+
         """
         Use RMRC for precise vertical movement (pick or place)
         start_pos: [x, y, z] starting position
@@ -349,35 +286,15 @@ class FoodOrderRobotv1:
         end_pos = start_pos + np.array([0.3, 0, 0])
         print("Moving EE by +0.3m in X using RMRC dragging placed meshes...")
 
-        self.rmrc_linear_movement(robot, env, start_pos, end_pos, tool_orientation, mesh_list=placed_meshes)
+        self.rmrc_vertical_movement(robot, env, start_pos, end_pos, tool_orientation, mesh_list=placed_meshes)
 
         print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
         input("Press Enter to close environment...")
         env.close()
 
-
-    # ========== Demo Function ==========
-    def run_demo(self):
-        """Demo with predefined food order list"""
-        # Example food order - list of ingredient locations
-        food_locations = [
-            [0.5, 0.0, 0.0],   # Lettuce
-            [0.4, 0.3, 0.0],    # Tomato  
-            [0.4, 0.4, 0.0],    # Cheese
-            [0.4, 0.2, 0.0],   # Meat
-            [0.4, 0.2, 0.0],    # Onion
-        ]
-        
-        # Assembly station location
-        station_location = [0.0, 0.5, 0.0]
-        
-        # Process the order
-        self.process_food_order(food_locations, station_location)
-
 def main():
     """Main function to run food order demo"""
     food_robot = FoodOrderRobotv1()
-    food_robot.run_demo()
 
 if __name__ == "__main__":
     main()

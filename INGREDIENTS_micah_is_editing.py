@@ -158,7 +158,7 @@ def collect_veggie_locations_and_meshes(piles):
     for ingredient_name in ['beetroot']:
         pile_list = piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
-        for mesh in pile_list[:2]:
+        for mesh in pile_list[:2]: # Picks up 2
             pose_se3 = SE3(mesh.T)
             pos = pose_se3.t
             food_locations.append([pos[0], pos[1], pos[2]])
@@ -179,6 +179,11 @@ def main():
     env.set_camera_pose([2, -2, 2], [0, 0, 0])
     env.step()
     
+    #1. Robot A does movement 
+    #2. If Robot A finished, move to next robot
+    #3. Loop
+
+
     # Create a custom FoodOrderRobot that uses external env and robot
     micahs_robot = FoodOrderRobotv1(robot=irb_robot, env=env)
     
