@@ -337,9 +337,9 @@ class FoodOrderRobotv1:
             mesh_z_offsets=mesh_z_offsets
         )
 
-        print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
-        input("Press Enter to close environment...")
-        env.close()
+        # print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
+        # input("Press Enter to close environment...")
+        # env.close()
 
 def main():
     """Main function to run food order demo"""
