@@ -301,21 +301,32 @@ class FoodOrderRobotv1:
             pose_se3 = SE3(m.T)
             mesh_z_offsets.append(pose_se3.t[2] - base_height)
         
-        push_height = current_z + 0.005  # a little above surface
+        push_height = 1  # a little above surface
 
         T_current = robot.fkine(robot.q)
         current_pos = T_current.t
 
-        start_pos = current_pos.copy()
-        start_pos[2] = current_pos[2]  # ensure pushing at correct height
-        start_pos[0] += 0.05        # Move EE 0.05m forward of food start
+       # Slide back by 0.3 m total from EE start point
 
-        end_pos = start_pos.copy()
-        end_pos[0] -= 0.2           # Slide back by 0.3 m total from EE start point
+        # --- new forward offset step before sliding ---
+        approach_pos = current_pos.copy()
+        approach_pos[0] += 0.05                   # move EE forward 5 cm first
+        print("Offsetting EE forward before sliding...")
+        self.rmrc_vertical_movement(robot, env, current_pos, approach_pos, tool_orientation)
+        current_pos = approach_pos    
+
 
         if current_pos[2] > push_height:
             print("Lowering EE before pushing food...")
-            self.rmrc_vertical_movement(robot, env, current_pos, start_pos, tool_orientation)
+            lower_pos = current_pos.copy()
+            lower_pos[2] = push_height             # go to the correct contact height
+            self.rmrc_vertical_movement(robot, env, current_pos, lower_pos, tool_orientation)
+            current_pos = lower_pos                # now update EE position reference
+
+        start_pos = current_pos.copy()
+        start_pos[0] += 0.05
+        end_pos = start_pos.copy()
+        end_pos[0] -= 0.2
 
         print("Moving EE with offset to push food by sliding...")
 
