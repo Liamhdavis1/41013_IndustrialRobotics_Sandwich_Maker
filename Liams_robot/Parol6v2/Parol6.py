@@ -72,46 +72,55 @@ class Parol6(DHRobot3D):
         self.q = self._qtest
         self.add_to_env(env)
 
+# <<<<<<< HEAD
+
+#         q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
+#         qtraj = rtb.jtraj(self.q, q_goal, 50).q
+#         fig = self.plot(self.q)
+#         input("delay")
+
+# =======
         # q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
         # qtraj = rtb.jtraj(self.q, q_goal, 50).q
         # fig = self.plot(self.q)
         # input("delay")
-        q_goal  = [
-            self.q[0],
-            self.q[1],
-            self.q[2],
-            self.q[3],
-            self.q[4]+pi,
-            self.q[5],
-        ]
-        qtraj = rtb.jtraj(self.q, q_goal, 150).q
+# >>>>>>> 1445989ee4eb1eb1dc152de8b11536a44f6b2bdb
+#         q_goal  = [
+#             self.q[0],
+#             self.q[1],
+#             self.q[2],
+#             self.q[3],
+#             self.q[4]+pi,
+#             self.q[5],
+#         ]
+#         qtraj = rtb.jtraj(self.q, q_goal, 150).q
 
-        fig = self.plot(self.q, limits= [-1,1,-1,1,-1,1])
-        fig._add_teach_panel(self, self.q)
-        for q in qtraj:
-            self.q = q
-            env.step(0.02)       
-            fig.step(0.02)
-        fig.hold()
-        env.hold()
-        time.sleep(3)
-        # env = swift.Swift()
-        # env.launch(realtime=True)
+#         fig = self.plot(self.q, limits= [-1,1,-1,1,-1,1])
+#         fig._add_teach_panel(self, self.q)
+#         for q in qtraj:
+#             self.q = q
+#             env.step(0.02)       
+#             fig.step(0.02)
+#         fig.hold()
+#         env.hold()
+#         time.sleep(3)
+#         # env = swift.Swift()
+#         # env.launch(realtime=True)
 
-        # self.q = self._qtest
-        # self.add_to_env(env)
+#         # self.q = self._qtest
+#         # self.add_to_env(env)
 
-        # q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
-        # qtraj = rtb.jtraj(self.q, q_goal, 50).q
-        # fig = self.plot(self.q)
+#         # q_goal = [self.q[i] - pi / 3 for i in range(len(self.q))]
+#         # qtraj = rtb.jtraj(self.q, q_goal, 50).q
+#         # fig = self.plot(self.q)
 
-        # for q in qtraj:
-        #     self.q = q
-        #     env.step(0.02)
-        #     fig.step(0.01)
+#         # for q in qtraj:
+#         #     self.q = q
+#         #     env.step(0.02)
+#         #     fig.step(0.01)
 
-        # env.hold()
+#         # env.hold()
 
-if __name__ == "__main__":
-    robot = Parol6()
-    robot.test()
+# if __name__ == "__main__":
+#     robot = Parol6()
+#     robot.test()

@@ -27,13 +27,13 @@ irb = abb_irb_120()
 # Cobot = Cobot320()
 # IRB = VeggieRobotAbb_irb120() 
 
-# UR3.base = SE3(0.75,0.5,1)
-# UR3.add_to_env(env)
+UR3.base = SE3(1.75,0.2,1)
+UR3.add_to_env(env)
 
-XArm.base = SE3(0.95,0.35,0.8)
+XArm.base = SE3(0.95,0.25,1)
 XArm.add_to_env(env)
 
-irb.base = SE3(0.55,0.5,0.8)
+irb.base = SE3(0,0.25,1) @ SE3.Rz(-pi/2)
 irb.add_to_env(env)
 # Cobot.base = SE3(-0.75,0.5,1)
 # Cobot.add_to_env(env)
@@ -46,12 +46,17 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 ENV = {
     "glass": {
         "path": os.path.join(current_path, "env", "glass.stl"),
-        "scale": (0.8, 0.8, 0.8),
+        "scale": (1,1,1),
         "color": [0.6, 0.6, 0.6, 0.4]
     },
     "bench": {
-        "path": os.path.join(current_path, "env", "bench.stl"),
-        "scale": (0.8, 0.8, 0.8),
+        "path": os.path.join(current_path, "env", "benchv2.stl"),
+        "scale": (1,1,1),
+        "color": [0.6, 0.6, 0.6, 1]
+    },
+    "bread_rack" : {
+        "path": os.path.join(current_path, "env", "bread_rack.stl"),
+        "scale": (1,1,1),
         "color": [0.6, 0.6, 0.6, 1]
     }
 }
@@ -73,6 +78,7 @@ def spawn_obj(env, name, pose):
 # --- Example spawns ---
 bench = spawn_obj(env, "bench", SE3(0, 0, 0))
 glass =spawn_obj(env, "glass", SE3(0, 0, 0))
+bread_rack =spawn_obj(env, "bread_rack", SE3(0, 0, 0))
 
 
 steps = 50

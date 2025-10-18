@@ -8,7 +8,9 @@ import os
 import time
 from math import pi
 from Lilys_robot.XArm6 import XArm6
+from Micahs_robot.abb_irb_120 import abb_irb_120
 from ir_support.robots import UR3
+from Micahs_robot.abb_irb_120 import abb_irb_120
 
 # --- Setup environment ---
 env = swift.Swift()
@@ -41,8 +43,13 @@ INGREDIENTS = {
     },
     "bench": {
         # "path": r"C:\Users\lilyb\Documents\Sammich\41013_IndustrialRobotics_Sandwich_Maker\env\bench.stl",
-        "path": os.path.join(current_path, "env", "bench.stl"),
+        "path": os.path.join(current_path, "env", "benchv2.stl"),
         "scale": (1, 1, 1),
+        "color": [0.6, 0.6, 0.6, 1]
+    },
+        "bread_rack" : {
+        "path": os.path.join(current_path, "env", "bread_rack.stl"),
+        "scale": (1,1,1),
         "color": [0.6, 0.6, 0.6, 1]
     },
     "bread_bottom": {
@@ -126,6 +133,7 @@ def spawn_ingredient(env, name, pose):
 # --- Example spawns ---
 bench = spawn_ingredient(env, "bench", SE3(0, 0, 0))
 glass =spawn_ingredient(env, "glass", SE3(0, 0, 0))
+bread_rack =spawn_ingredient(env, "bread_rack", SE3(0, 0, 0))
 # bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(1.2,0.4,1) @ SE3.Rz(pi/2))
 bread_bottom = spawn_ingredient(env, "bread_bottom", SE3(-1, 0.25, 1))
 ham1 = spawn_ingredient(env, "ham", SE3(-0.99, 0.34, 1.01))
@@ -239,6 +247,21 @@ beetroot_pile = spawn_pile(
     dz_jitter=(-0.05, 0.05)
 )
 
+def spawn_bread_row(env, ingredient, n=5, start_pos=(2.5, -0.2, 1.4), dy=0.05):
+    x0, y0, z0 = start_pos
+    row = []
+    for i in range(n):
+        pose = SE3(x0, y0 + i * dy, z0) @ SE3.Rz(pi/2)
+        slice_mesh = spawn_ingredient(env, ingredient, pose)
+        row.append(slice_mesh)
+    return row
+
+storage_pose = (2.37, -0.2, 1.4)
+bread_bottom_row = spawn_bread_row(env, "bread_bottom", n=5, start_pos=storage_pose, dy=0.2)
+bread_top_row = spawn_bread_row(env, "bread_top", n=5, start_pos=storage_pose, dy=0.2)
+storage_pose1 = (2.37, -0.2, 1.1)
+bread_bottom_row1 = spawn_bread_row(env, "bread_bottom", n=5, start_pos=storage_pose1, dy=0.2)
+bread_top_row1 = spawn_bread_row(env, "bread_top", n=5, start_pos=storage_pose1, dy=0.2) 
 
 #===================================================================
 #                         MAKE SANWICH 
@@ -265,4 +288,13 @@ for q in rtb.jtraj(XArm.q, q_pick, steps).q:
     XArm.q = q
     env.step(0.05)
 # print(ham_pile[0].T)
+
+# steps = 50
+# start = bread_top_row[0].T
+# target = bread_bottom.T
+# q0 = np.zeros(6)
+# q_pick = UR3.ikine_LM(bread_top_row[0].T, q0=q0).q
+# for q in rtb.jtraj(UR3.q, q_pick, steps).q:
+#     UR3.q = q
+#     env.step(0.05)
 env.hold() 
