@@ -161,104 +161,104 @@ def spawn_bread_row(env, ingredient, n=5, start_pos=(2.5, -0.2, 1.4), dy=0.05):
     return row
 
 
-# Define bread setup parameters
-storage_z_levels = [1.4, 1.1]   # multiple shelves
-ingredients = ["bread_bottom", "bread_top"]
+def spawn_bread(env):
+    bread_piles = {}
+    storage_z_levels = [1.4, 1.1]  # multiple shelves
+    ingredients = ["bread_bottom", "bread_top"]
 
-# Spawn bread rows at each level
-bread_rows = {}  # to keep them organized if you want to access later
-
-for z in storage_z_levels:
     for ingredient in ingredients:
-        name = f"{ingredient}_z{z}"
-        bread_rows[name] = spawn_bread_row(env,ingredient=ingredient,n=5,start_pos=(2.37, -0.2, z),dy=0.2)
+        bread_piles[ingredient] = []  # initialize each pile
 
+        for z in storage_z_levels:
+            row = spawn_bread_row(env,ingredient=ingredient,n=5,start_pos=(2.37, -0.2, z),dy=0.2)
+            bread_piles[ingredient].extend(row)  # append meshes from each shelf
 
+    return bread_piles
 
-def collect_bread_locations(piles):
+def collect_bread_locations_and_meshes(bread_piles):
+    """Collect both positions and mesh objects from ingredient piles"""
     food_locations = []
+    food_meshes = []
+    
     for ingredient_name in ['bread_top', 'bread_bottom']:
-        pile_list = piles.get(ingredient_name, [])
+        pile_list = bread_piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
-        for mesh in pile_list[0]:
+        for mesh in pile_list[:1]: # Picks up 2
             pose_se3 = SE3(mesh.T)
             pos = pose_se3.t
             food_locations.append([pos[0], pos[1], pos[2]])
-    return food_locations
+            food_meshes.append(mesh)  # Add the actual mesh object!
+    return food_locations, food_meshes
 
-# --- Collect mesh functions ---
-def collect_meat_meshes(piles):
-    """Return the Mesh objects for meat ingredients."""
-    meshes = []
-    for ingredient_name in ['ham', 'salami', 'beef', 'chicken']:
+def collect_veggie_locations_and_meshes(piles):
+    """Collect both positions and mesh objects from ingredient piles"""
+    food_locations = []
+    food_meshes = []
+    
+    for ingredient_name in ['beetroot']:
         pile_list = piles.get(ingredient_name, [])
-        for mesh in pile_list[:2]:  # first 2 items for simplicity
-            meshes.append(mesh)
-    return meshes
+        # Take first 2 items from each pile (or adjust as needed)
+        for mesh in pile_list[:2]: # Picks up 2
+            pose_se3 = SE3(mesh.T)
+            pos = pose_se3.t
+            food_locations.append([pos[0], pos[1], pos[2]])
+            food_meshes.append(mesh)  # Add the actual mesh object!
+    return food_locations, food_meshes
 
-def collect_veggie_meshes(piles):
-    """Return the Mesh objects for veggie ingredients."""
-    meshes = []
-    for ingredient_name in ['lettuce', 'tomato', 'cucumber', 'beetroot']:
+def collect_meat_locations_and_meshes(piles):
+    """Collect both positions and mesh objects from ingredient piles"""
+    food_locations = []
+    food_meshes = []
+    
+    for ingredient_name in ['ham']:
         pile_list = piles.get(ingredient_name, [])
-        for mesh in pile_list[:2]:
-            meshes.append(mesh)
-    return meshes
-
-def collect_meat_locations(piles):
-    """Return positions of meat ingredients for robot movement."""
-    locations = []
-    for ingredient_name in ['ham', 'salami', 'beef', 'chicken']:
-        pile_list = piles.get(ingredient_name, [])
-        for mesh in pile_list[:2]:
-            pos = SE3(mesh.T).t
-            locations.append([pos[0], pos[1], pos[2]])
-    return locations
-
-def collect_veggie_locations(piles):
-    """Return positions of veggie ingredients for robot movement."""
-    locations = []
-    for ingredient_name in ['lettuce', 'tomato', 'cucumber', 'beetroot']:
-        pile_list = piles.get(ingredient_name, [])
-        for mesh in pile_list[:2]:
-            pos = SE3(mesh.T).t
-            locations.append([pos[0], pos[1], pos[2]])
-    return locations
+        # Take first 2 items from each pile (or adjust as needed)
+        for mesh in pile_list[:2]: # Picks up 2
+            pose_se3 = SE3(mesh.T)
+            pos = pose_se3.t
+            food_locations.append([pos[0], pos[1], pos[2]])
+            food_meshes.append(mesh)  # Add the actual mesh object!
+    return food_locations, food_meshes
 
 
 # --- Main ---
 def main():
     env = swift.Swift()
     env.launch(realtime=True)
-    
+    spawn_items(env)
+
     # Setup robots
     UR3_robot, XArm_robot, irb_robot = setup_robots(env)
     
     # Spawn piles of ingredients
+# Spawn piles of ingredients
     piles = spawn_all_piles(env)
-    
-    # Optional: spawn bread or other individual items
-    spawn_items(env)
-    
+    bread_piles = spawn_bread(env)
+
+    # Collect bread locations and meshes
+
+
     # Set camera
     env.set_camera_pose([2, -2, 2], [0, 0, 0])
     env.step()
+
+    # === Bread robot ===
+    # bread_robot = FoodOrderRobotv1(robot=UR3_robot, env=env)
+    # bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread_piles)
+    # bread_meshes = collect_bread_locations_and_meshes(piles)
+    # bread_station_location = [0.95, 0.4, 1]
+    # bread_robot.process_food_order(bread_locations, bread_station_location, mesh_list=bread_meshes)    
     
     # === Meat robot ===
     meat_robot = FoodOrderRobotv1(robot=XArm_robot, env=env)
-    meat_locations = collect_meat_locations(piles)
-    meat_meshes = collect_meat_meshes(piles)
+    meat_locations, meat_meshes = collect_meat_locations_and_meshes(piles)
     meat_station_location = [0.95, 0.4, 1]
     meat_robot.process_food_order(meat_locations, meat_station_location, mesh_list=meat_meshes)
 
-    # veggie_station_location = [0.1, 0.4, 1]  # next station
-    # meat_robot.move_meshes_to_location(mesh_list=meat_meshes, target_location=veggie_station_location)
-    
     # === Veggie robot ===
     veggie_robot = FoodOrderRobotv1(robot=irb_robot, env=env)
-    veggie_locations = collect_veggie_locations(piles)
-    veggie_meshes = collect_veggie_meshes(piles)
-    # veggie_station_location = [0.1, 0.4, 1]
+    veggie_locations, veggie_meshes = collect_veggie_locations_and_meshes(piles)
+    veggie_station_location = [0.1, 0.4, 1]
     veggie_robot.process_food_order(veggie_locations, veggie_station_location, mesh_list=veggie_meshes)
     
     # Hold the environment for inspection
