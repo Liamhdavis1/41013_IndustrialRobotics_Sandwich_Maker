@@ -326,7 +326,7 @@ class FoodOrderRobotv1:
         start_pos = current_pos.copy()
         start_pos[0] += 0.05
         end_pos = start_pos.copy()
-        end_pos[0] -= 0.5
+        end_pos[0] -= 0.4
 
         print("Moving EE with offset to push food by sliding...")
 
