@@ -199,24 +199,29 @@ class FoodOrderRobotv1:
         if gripper_down_orientation_place is None:
             gripper_down_orientation_place = SE3.Rz(np.pi)
 
-        # Define safe hover poses above pick and place positions
         safe_pose_above_pick = pick_pose * gripper_down_orientation_pick
         safe_pose_above_place = place_pose * gripper_down_orientation_place
 
-        # Initial guess for IK near robot nominal pose to help convergence (can be tuned)
-        q0_pick = np.array([0, 0, np.pi/2, 0, 0, 0])
-        q0_place = np.array([0, 0, np.pi/2, 0, 0, 0])
+        # Poses above the brick for picking and placing, factor in brick height
+        pick_pose_above_brick = pick_pose * gripper_down_orientation_pick
+        place_pose_above_brick = place_pose * gripper_down_orientation_place
 
-        # Use robust IK solving (wrap solve_ik_robust) to find joint configs for safe poses
-        q_safe_pick = self.solve_ik_robust(self.robot, safe_pose_above_pick, q0_pick)
-        q_safe_place = self.solve_ik_robust(self.robot, safe_pose_above_place, q0_place)
+        #Initial guess for IK based on pick and place positions, elbow bent up, away from floor
+        q0_pick  = np.array([0, 0, pi/2, 0, 0, 0])
+        q0_place = np.array([0, 0, pi/2, 0, 0, 0])
+        
+        # IK for safe poses
+        sol_safe_pick = self.robot.ikine_LM(safe_pose_above_pick, q0=q0_pick)
+        sol_safe_place = self.robot.ikine_LM(safe_pose_above_place, q0=q0_place)
+        # Clip joint values to enforce limits
+        q_safe_pick = np.clip(sol_safe_pick.q, self.robot.qlim[0], self.robot.qlim[1])
+        q_safe_place = np.clip(sol_safe_place.q, self.robot.qlim[0], self.robot.qlim[1])
 
-        # Use safe poses solutions as new seeds for exact pick and place poses
-        pick_pose_final = pick_pose * gripper_down_orientation_pick
-        place_pose_final = place_pose * gripper_down_orientation_place
-
-        q_pick = self.solve_ik_robust(self.robot, pick_pose_final, q_safe_pick)
-        q_place = self.solve_ik_robust(self.robot, place_pose_final, q_safe_place)
+        # Repeat above for pick and place poses
+        sol_pick = self.robot.ikine_LM(pick_pose_above_brick, q0=q_safe_pick)
+        sol_place = self.robot.ikine_LM(place_pose_above_brick, q0=q_safe_place)
+        q_pick = np.clip(sol_pick.q, self.robot.qlim[0], self.robot.qlim[1])
+        q_place = np.clip(sol_place.q, self.robot.qlim[0], self.robot.qlim[1])
 
         # Define trajectory segments between key poses
         trajectory_pairs = [

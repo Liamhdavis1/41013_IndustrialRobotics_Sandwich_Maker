@@ -146,8 +146,8 @@ class RobotEnvironment:
         irb_robot = abb_irb_120()
         Cobot = Cobot320()
         # Apply offset to bases
-        irb_robot.base = SE3(0, 0.2, 1) * SE3.Trans(ENV_OFFSET)
-        Cobot.base = SE3(-0.95, 0.15, 1) * SE3.Trans(ENV_OFFSET)
+        irb_robot.base = SE3(0, 0.1, 1) * SE3.Trans(ENV_OFFSET)
+        Cobot.base = SE3(-0.95, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         XArm_robot.base = SE3(0.95, 0.15, 1) * SE3.Trans(ENV_OFFSET)
         UR3_robot.base = SE3(1.75, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         
@@ -200,61 +200,63 @@ class RobotEnvironment:
     
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
+        # self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+        #                                 place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+        #                                 mesh=bread_meshes, 
+        #                                 gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
+        #                                 gripper_down_orientation_place=SE3.Rz(np.pi))
 
-        pick_pose = SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET)
-        place_pose = SE3(-1.25, 0.45, 1.5) * SE3.Trans(ENV_OFFSET)
+        self.meat_robot_ctrl.process_food_order(meat_locs, 
+                                                station_location=[2.45, 1.0, 1], 
+                                                mesh_list=meat_meshes)
+        
+        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+                                                    self.env, 
+                                                    SE3(2.45, 1.0, 1).t,
+                                                    SE3(1.9, 1.0, 1).t,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=meat_meshes)
+        
+        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+                                                    self.env, 
+                                                    SE3(1.9, 1.0, 1).t,
+                                                    SE3(2.45, 1.0, 1.2).t,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=None)
+        
+        print("Processing veggies with IRB...")
 
-        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        mesh=bread_meshes, 
-                                        gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
-                                        gripper_down_orientation_place=SE3.Rz(np.pi))
-        # self.cobot_ctrl.move_pick_place(pick_pose, place_pose, mesh=meat_meshes)
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+                                                    self.env, 
+                                                    SE3(1.9, 1.0, 1).t,
+                                                    SE3(1.5, 1.0, 1).t,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=meat_meshes)
+        
+        self.veggie_robot_ctrl.process_food_order(veggie_locs, 
+                                                  station_location=[1.5, 1.0, 1], 
+                                                  mesh_list=veggie_meshes)
+        
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+                                                    self.env, 
+                                                    SE3(1.5, 1.0, 1).t,
+                                                    SE3(1.3, 1.0, 1).t,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=meat_meshes + veggie_meshes)
+        
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+                                                    self.env, 
+                                                    SE3(1.3, 1.0, 1.0).t,
+                                                    SE3(1.5, 1.0, 1.2).t,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=None)
+        
+        print("Processing with Cobot320...")
 
-        # self.meat_robot_ctrl.process_food_order(meat_locs, station_location=[2.45, 1.0, 1], mesh_list=meat_meshes)
-        # self.meat_robot_ctrl.rmrc_vertical_movement(
-        #     self.meat_robot_ctrl.robot,
-        #     self.meat_robot_ctrl.env,
-        #     SE3(2.45, 1.0, 1).t,
-        #     SE3(2.0, 1.0, 1).t,
-        #     tool_orientation=[pi, 0, 0],
-        #     mesh_list=meat_meshes
-        # )
-        # self.meat_robot_ctrl.rmrc_vertical_movement(
-        #     self.meat_robot_ctrl.robot,
-        #     self.meat_robot_ctrl.env,
-        #     SE3(2.0, 1.0, 1).t,
-        #     SE3(2.45, 1.0, 1.2).t,
-        #     tool_orientation=[pi, 0, 0],
-        #     mesh_list=None
-        # )
-
-
-        # print("Processing veggies with Cobot320...")
-        # self.veggie_robot_ctrl.rmrc_vertical_movement(
-        #     self.veggie_robot_ctrl.robot,
-        #     self.veggie_robot_ctrl.env,
-        #     SE3(1.7, 1.0, 1).t,
-        #     SE3(1.5, 1.0, 1).t,
-        #     tool_orientation=[pi, 0, 0],
-        #     mesh_list=meat_meshes
-        # )
-        # self.veggie_robot_ctrl.process_food_order(veggie_locs, station_location=[1.5, 1.0, 1], mesh_list=veggie_meshes)
-        # self.veggie_robot_ctrl.rmrc_vertical_movement(
-        #     self.veggie_robot_ctrl.robot,
-        #     self.veggie_robot_ctrl.env,
-        #     SE3(1.5, 1.0, 1).t,
-        #     SE3(1.3, 1.0, 1).t,
-        #     tool_orientation=[pi, 0, 0],
-        #     mesh_list=meat_meshes + veggie_meshes
-        # )
-
-        # self.veggie_robot_ctrl.rmrc_vertical_movement(
-        #     self.veggie_robot_ctrl.robot,
-        #     self.veggie_robot_ctrl.env,
-        #     SE3(1.3, 1.0, 1).t,
-        #     SE3(1.5, 1.0, 1.2).t,
-        #     tool_orientation=[pi, 0, 0],
-        #     mesh_list=None
-        # )
+        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(1.3, 1.0, 1.0), 
+                                        place_pose=SE3(0.9, 0.55, 1.0), 
+                                        mesh=meat_meshes + veggie_meshes, 
+                                        gripper_down_orientation_pick=None, 
+                                        gripper_down_orientation_place=None)
+    
 
