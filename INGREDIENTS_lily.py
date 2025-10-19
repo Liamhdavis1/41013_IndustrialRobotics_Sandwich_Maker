@@ -10,6 +10,7 @@ from Micahs_robot.abb_irb_120 import abb_irb_120
 from Lilys_robot.XArm6 import XArm6
 from ir_support.robots import UR3
 from FoodOrderRobotv1 import FoodOrderRobotv1
+from bread import BreadCollection
 
 
 env = swift.Swift()
@@ -122,7 +123,7 @@ def spawn_ingredient(env, name, pose):
 def spawn_items(env):
     item = {}
     item["bench"] = spawn_ingredient(env, "bench", SE3(0, 0, 0))
-    item["glass"] = spawn_ingredient(env, "glass", SE3(0, 0, 0))
+    item["glass"] = spawn_ingredient(env, "glass", SE3(0.5, 0, 0))
     item["bread_rack"] = spawn_ingredient(env, "bread_rack", SE3(0, 0, 0))
     return item
 
@@ -243,11 +244,11 @@ def main():
     env.step()
 
     # === Bread robot ===
-    # bread_robot = FoodOrderRobotv1(robot=UR3_robot, env=env)
-    # bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread_piles)
-    # bread_meshes = collect_bread_locations_and_meshes(piles)
-    # bread_station_location = [0.95, 0.4, 1]
-    # bread_robot.process_food_order(bread_locations, bread_station_location, mesh_list=bread_meshes)    
+    bread_robot = BreadCollection(robot=UR3_robot, env=env)
+    bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread_piles)
+    bread_meshes = collect_bread_locations_and_meshes(piles)
+    bread_station_location = [0.95, 0.4, 1]
+    bread_robot.process_food_order_side(bread_locations, bread_station_location, mesh_list=bread_meshes)  
     
     # === Meat robot ===
     meat_robot = FoodOrderRobotv1(robot=XArm_robot, env=env)
