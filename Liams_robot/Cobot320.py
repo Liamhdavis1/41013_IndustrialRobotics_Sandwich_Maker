@@ -56,7 +56,7 @@ class Cobot320(DHRobot3D):
     
         qlim = [
             [-pi, pi],
-            [deg2rad(-165), deg2rad(165)],  # Joint 2: ±165°
+            [deg2rad(-180), deg2rad(0)],
             [deg2rad(-165), deg2rad(165)],  # Joint 3: ±165°
             [deg2rad(-165), deg2rad(165)],  # Joint 4: ±165°
             [deg2rad(-165), deg2rad(165)],  # Joint 5: ±165°

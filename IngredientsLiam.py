@@ -202,14 +202,17 @@ class RobotEnvironment:
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
 
-        pick_pose = SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET)
-        place_pose = SE3(-1.25, 0.45, 1.5) * SE3.Trans(ENV_OFFSET)
+        self.UR3_robot.other_ik_solver(pick_pose=SE3(3.5, 0.5, 1.4), 
+                                        place_pose=SE3(3.2, 1.0, 1.1), 
+                                        mesh=None,
+                                        gripper_down_orientation_pick=SE3.Ry(pi/2), 
+                                        gripper_down_orientation_place=SE3.Ry(pi/2))
 
-        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        mesh=bread_meshes, 
-                                        gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
-                                        gripper_down_orientation_place=SE3.Rz(np.pi))
+        # self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+        #                                 place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+        #                                 mesh=bread_meshes, 
+        #                                 gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
+        #                                 gripper_down_orientation_place=SE3.Rz(np.pi))
         # self.cobot_ctrl.move_pick_place(pick_pose, place_pose, mesh=meat_meshes)
 
         self.meat_robot_ctrl.process_food_order(meat_locs, 
@@ -232,7 +235,7 @@ class RobotEnvironment:
         
         print("Processing veggies with IRB...")
 
-        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot, 
                                                     self.env, 
                                                     SE3(1.9, 1.0, 1).t,
                                                     SE3(1.5, 1.0, 1).t,
@@ -243,14 +246,14 @@ class RobotEnvironment:
                                                   station_location=[1.5, 1.0, 1], 
                                                   mesh_list=veggie_meshes)
         
-        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot, 
                                                     self.env, 
                                                     SE3(1.5, 1.0, 1).t,
                                                     SE3(1.3, 1.0, 1).t,
                                                     tool_orientation=[pi,0,0],
                                                     mesh_list=meat_meshes + veggie_meshes)
         
-        self.veggie_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot, 
                                                     self.env, 
                                                     SE3(1.3, 1.0, 1.0).t,
                                                     SE3(1.5, 1.0, 1.2).t,
@@ -259,8 +262,8 @@ class RobotEnvironment:
         
         print("Processing with Cobot320...")
 
-        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(1.3, 1.0, 1.0), 
-                                        place_pose=SE3(0.9, 0.55, 1.0), 
+        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(1.3, 1.0, 1.1), 
+                                        place_pose=SE3(0.9, 0.55, 1.1), 
                                         mesh=meat_meshes + veggie_meshes, 
                                         gripper_down_orientation_pick=None, 
                                         gripper_down_orientation_place=None)
