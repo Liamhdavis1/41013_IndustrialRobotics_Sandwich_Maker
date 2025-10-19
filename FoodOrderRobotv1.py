@@ -181,7 +181,7 @@ class FoodOrderRobotv1:
             self.rmrc_vertical_movement(robot, env, start_pos, lowered_pos, tool_orientation)
 
     # ========== Main Food Order Processing Function ==========
-    def process_food_order(self, food_locations, station_location, mesh_list = None):
+    def process_food_order(self, food_locations, station_location, mesh_list = None, tool_orientation=[pi, 0, 0]):
         """
         Main function to process food order by iterating through ingredient locations
         
@@ -198,7 +198,7 @@ class FoodOrderRobotv1:
         current_z = station_location[2]
 
         # Tool orientation (pointing downward for picking)
-        tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
+        # tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
 
         print(f"Processing order with {len(food_locations)} ingredients...")
         print(f"Station location: {station_location}")
