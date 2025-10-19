@@ -12,6 +12,23 @@ from math import pi
 from Micahs_robot.abb_irb_120 import abb_irb_120
 
 class BreadCollection:
+    def __init__(self, robot = None, env = None):
+        self.robot = robot
+        self.env = env
+        # RMRC Parameters for precise movements
+        self.rmrc_time = 1.0                      # Time for RMRC movements (pick/place)
+        self.delta_t = 0.02                       # Control frequency
+        self.rmrc_steps = int(self.rmrc_time/self.delta_t)
+        self.epsilon = 0.1                        # Manipulability threshold
+        self.W = np.diag([1, 1, 1, 0.1, 0.1, 0.1])  # Weighting matrix
+        
+        # Movement parameters
+        self.hover_height = 0.2                   # Height above objects (0.2m)
+        self.convergence_tolerance = 1e-6         # IK tolerance
+
+        # Define grip offset for mesh attachment (adjust as needed)
+        self.grip_offset = SE3.Trans(0, 0, 0) * SE3.Rx(np.pi)  # Tool pointing down
+    
     def rmrc_side_movement(self, robot, env, start_pos, end_pos, tool_orientation,
                         mesh=None, mesh_list=None, grip_offset=None,
                         mesh_offset_along_z=0.0, mesh_z_offsets=None):
