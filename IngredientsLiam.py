@@ -161,8 +161,8 @@ class RobotEnvironment:
 
     def spawn_items(self, env):
         spawn_ingredient(env, "bench", SE3(*ENV_OFFSET))
-        spawn_ingredient(env, "glass", SE3(*ENV_OFFSET))
-        spawn_ingredient(env, "bread_rack", SE3(*ENV_OFFSET))
+        spawn_ingredient(env, "glass", SE3(0.5, 0, 0)*SE3(*ENV_OFFSET))
+        spawn_ingredient(env, "bread_rack", SE3(-0.1, 0, 0)*SE3(ENV_OFFSET))
 
     def spawn_bread(self, env):
         bread_piles = {}
@@ -171,7 +171,7 @@ class RobotEnvironment:
             bread_piles[ingredient] = []
             for z in storage_z:
                 for i in range(5):
-                    pose = SE3(2.37, -0.2 + i * 0.2, z) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+                    pose = SE3(2.2, -0.2 + i * 0.2, z) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
                     slice_mesh = spawn_ingredient(env, ingredient, pose)
                     bread_piles[ingredient].append(slice_mesh)
         return bread_piles
@@ -202,8 +202,8 @@ class RobotEnvironment:
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
 
-        self.UR3_robot.other_ik_solver(pick_pose=SE3(3.5, 0.5, 1.4), 
-                                        place_pose=SE3(3.2, 1.0, 1.1), 
+        self.UR3_robot.other_ik_solver(pick_pose=SE3(3.7, 0.3, 1.4), 
+                                        place_pose=SE3(3.2, 0.5, 1.1), 
                                         mesh=None,
                                         gripper_down_orientation_pick=SE3.Ry(pi/2), 
                                         gripper_down_orientation_place=SE3.Ry(pi/2))

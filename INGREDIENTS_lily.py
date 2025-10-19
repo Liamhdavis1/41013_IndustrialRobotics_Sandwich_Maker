@@ -193,7 +193,7 @@ def spawn_all_piles(env):
 
 def spawn_bread(env):
     bread_piles = {}
-    storage_z = [1.1, 1.4]
+    storage_z = [1.4, 1.1]
     for ingredient in ["bread_bottom"]:
         bread_piles[ingredient] = []
         for z in storage_z:
@@ -484,7 +484,7 @@ def bread():
 
 
 if __name__ == "__main__":
-    main()
-    # bread()
+    # main()
+    bread()
 
 
