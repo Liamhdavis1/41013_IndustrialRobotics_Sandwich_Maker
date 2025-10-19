@@ -139,6 +139,7 @@ class RobotEnvironment:
         self.meat_robot_ctrl = FoodOrderRobotv1(robot=self.XArm_robot, env=self.env)
         self.veggie_robot_ctrl = FoodOrderRobotv1(robot=self.irb_robot, env=self.env)
         self.cobot_ctrl = FoodOrderRobotv1(robot=self.Cobot, env=self.env)
+        self.UR3_robot = FoodOrderRobotv1(robot=self.UR3_robot, env=self.env)
 
     def setup_robots(self, env):
         UR3_robot = UR3()
@@ -204,11 +205,7 @@ class RobotEnvironment:
         pick_pose = SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET)
         place_pose = SE3(-1.25, 0.45, 1.5) * SE3.Trans(ENV_OFFSET)
 
-        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
-                                        mesh=bread_meshes, 
-                                        gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
-                                        gripper_down_orientation_place=SE3.Rz(np.pi))
+        
         # self.cobot_ctrl.move_pick_place(pick_pose, place_pose, mesh=meat_meshes)
 
         # self.meat_robot_ctrl.process_food_order(meat_locs, station_location=[2.45, 1.0, 1], mesh_list=meat_meshes)
