@@ -33,9 +33,23 @@ class IngredientSelector(tk.Tk):
         selected = [ing for ing, var in self.ingredient_vars.items() if var.get()]
         meat_selection = [ing for ing in selected if ing in meat_ingredients]
         veggie_selection = [ing for ing in selected if ing in veggie_ingredients]
+        bread_selection = ["bread_top", "bread_bottom"]  # Default both breads
 
         print("Selected meats:", meat_selection)
         print("Selected veggies:", veggie_selection)
 
-        # Pass selections to robot environment for processing
-        self.robot_env.process_order(meat_selection, veggie_selection)
+        # Get locations and meshes for ALL layers
+        bread_locs, bread_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.bread_piles, bread_selection)
+        meat_locs, meat_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, meat_selection)
+        veggie_locs, veggie_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, veggie_selection)
+
+        # Pass ALL six arguments, in proper order:
+        # self.robot_env.process_sandwich_along_line(
+        #     bread_locs, bread_meshes,
+        #     meat_locs, meat_meshes,
+        #     veggie_locs, veggie_meshes
+        # )
+        self.robot_env.process_sandwich_along_line(
+            meat_locs, meat_meshes,
+            veggie_locs, veggie_meshes
+        )

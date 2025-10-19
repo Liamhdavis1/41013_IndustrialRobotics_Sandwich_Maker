@@ -315,7 +315,6 @@ class FoodOrderRobotv1:
         self.rmrc_vertical_movement(robot, env, current_pos, approach_pos, tool_orientation)
         current_pos = approach_pos    
 
-
         if current_pos[2] > push_height:
             print("Lowering EE before pushing food...")
             lower_pos = current_pos.copy()
@@ -326,7 +325,7 @@ class FoodOrderRobotv1:
         start_pos = current_pos.copy()
         start_pos[0] += 0.05
         end_pos = start_pos.copy()
-        end_pos[0] -= 0.4
+        end_pos[0] -= 0.2
 
         print("Moving EE with offset to push food by sliding...")
 

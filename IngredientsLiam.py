@@ -182,32 +182,65 @@ class RobotEnvironment:
                 food_locations.append([pos[0], pos[1], pos[2]])
                 food_meshes.append(mesh)
         return food_locations, food_meshes
+    
+    def move_robot_between(self, robot, food_order_robot, env, start_q, end_pose_SE3, mesh_list):
+        q_end, success, error = food_order_robot.solve_ik_robust(robot, end_pose_SE3, start_q)
+        if not success:
+            print(f"IK failed: cannot reach {end_pose_SE3} (error={error})")
+            return False
+        food_order_robot.execute_trajectory(robot, env, start_q, q_end, mesh_list=mesh_list)
+        return True
 
-    def process_sandwich_along_line(self, bread_locs, bread_meshes, meat_locs, meat_meshes, veggie_locs, veggie_meshes):
-        # Define the sandwich path (can adjust X, Y, Z as needed)
+    def process_sandwich_along_line(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes):
         path = [
-            [0.3, 0.4, 1.0],  # bread robot station
-            [0.6, 0.4, 1.0],  # meat robot station
-            [0.9, 0.4, 1.0],  # veggie robot station
+            [2.45, 1.0, 1],    # meat robot station
+            [2.3, 1.0, 1],     # halfway handover point
+            [1.7, 1.0, 1],     # veggie robot halfway pickup
+            [1.5, 1.0, 1],     # veggie robot stacking station
+            [1.1, 1.0, 1],     # delivery point
         ]
 
-        # --- Bread stacking stage ---
-        bread_robot = FoodOrderRobotv1(robot=self.UR3_robot, env=self.env)
-        bread_robot.process_food_order(bread_locs, path[0], mesh_list=bread_meshes)
-        print("[INFO] Bread stacking complete.")
-
-        move_sandwich_mesh(bread_meshes, path[0], path[1], self.env)
-
-        # --- Meat stacking stage ---
         meat_robot = FoodOrderRobotv1(robot=self.XArm_robot, env=self.env)
-        combined_meshes1 = bread_meshes + meat_meshes
-        meat_robot.process_food_order(meat_locs, path[1], mesh_list=meat_meshes)
+        veggie_robot = FoodOrderRobotv1(robot=self.irb_robot, env=self.env)
+
+        # Meat stacking
+        meat_robot.process_food_order(meat_locs, path[0], mesh_list=meat_meshes)
         print("[INFO] Meat stacking complete.")
 
-        move_sandwich_mesh(combined_meshes1, path[1], path[2], self.env)
+        # Meat robot moves sandwich meshes from station to halfway handover
+        self.move_robot_between(self.XArm_robot, meat_robot, self.env,
+                                self.XArm_robot.q.copy(),
+                                SE3(path[1]),
+                                meat_meshes)
+        print("[INFO] Meat robot handed sandwich to halfway station.")
 
-        # --- Veggie stacking stage ---
-        veggie_robot = FoodOrderRobotv1(robot=self.irb_robot, env=self.env)
-        combined_meshes2 = bread_meshes + meat_meshes + veggie_meshes
-        veggie_robot.process_food_order(veggie_locs, path[2], mesh_list=veggie_meshes)
+        self.move_robot_between(self.XArm_robot, meat_robot, self.env,
+                                self.XArm_robot.q.copy(),
+                                SE3(path[0]),
+                                meat_meshes)
+
+        # Veggie robot moves itself from current config to halfway pickup point (no meshes attached)
+        self.move_robot_between(self.irb_robot, veggie_robot, self.env,
+                                self.irb_robot.q.copy(),
+                                SE3(path[2]),
+                                mesh_list=None)
+        print("[INFO] Veggie robot moved to halfway pickup.")
+
+        # Veggie robot moves sandwich meshes from halfway pickup to stacking station
+        self.move_robot_between(self.irb_robot, veggie_robot, self.env,
+                                self.irb_robot.q.copy(),
+                                SE3(path[3]),
+                                meat_meshes)
+        print("[INFO] Veggie robot dragged sandwich to stacking station.")
+
+        # Veggie robot stacks veggies
+        veggie_robot.process_food_order(veggie_locs, path[3], mesh_list=veggie_meshes)
         print("[INFO] Veggie stacking complete.")
+
+        # Veggie robot moves sandwich meshes from stacking to delivery point
+        self.move_robot_between(self.irb_robot, veggie_robot, self.env,
+                                self.irb_robot.q.copy(),
+                                SE3(path[4]),
+                                meat_meshes + veggie_meshes)
+        print("[INFO] Delivery complete.")
+
