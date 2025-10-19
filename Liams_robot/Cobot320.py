@@ -6,6 +6,7 @@ from ir_support.robots.DHRobot3D import DHRobot3D
 import time
 import os
 from math import pi
+from math import pi, radians as deg2rad
 
 class Cobot320(DHRobot3D):
     def __init__(self):
@@ -47,11 +48,29 @@ class Cobot320(DHRobot3D):
         alpha = [pi/2, 0, 0, pi/2, pi/2, -pi]
         offset = [0,pi/2, 0, -pi/2, pi, -pi/2]
 
-        qlim = [[-pi / 2, pi / 2] for _ in range(6)]
+        # qlim = [[-pi, pi] for _ in range(6)]
+        # for i in range(6):
+        #     link = rtb.RevoluteDH(d=d[i], a=a[i], alpha=alpha[i], offset=offset[i], qlim=qlim[i])
+        #     links.append(link)
+        # return links
+    
+        qlim = [
+            [-pi, pi],
+            [deg2rad(-165), deg2rad(165)],  # Joint 2: ±165°
+            [deg2rad(-165), deg2rad(165)],  # Joint 3: ±165°
+            [deg2rad(-165), deg2rad(165)],  # Joint 4: ±165°
+            [deg2rad(-165), deg2rad(165)],  # Joint 5: ±165°
+            [-pi, pi]
+        ]
+
+        links = []
         for i in range(6):
             link = rtb.RevoluteDH(d=d[i], a=a[i], alpha=alpha[i], offset=offset[i], qlim=qlim[i])
             links.append(link)
+
         return links
+    
+
 
     def test(self):
         env = swift.Swift()

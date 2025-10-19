@@ -137,7 +137,8 @@ class RobotEnvironment:
         self.env.step()
 
         self.meat_robot_ctrl = FoodOrderRobotv1(robot=self.XArm_robot, env=self.env)
-        self.veggie_robot_ctrl = FoodOrderRobotv1(robot=self.Cobot, env=self.env)
+        self.veggie_robot_ctrl = FoodOrderRobotv1(robot=self.irb_robot, env=self.env)
+        self.cobot_ctrl = FoodOrderRobotv1(robot=self.Cobot, env=self.env)
 
     def setup_robots(self, env):
         UR3_robot = UR3()
@@ -145,8 +146,8 @@ class RobotEnvironment:
         irb_robot = abb_irb_120()
         Cobot = Cobot320()
         # Apply offset to bases
-        irb_robot.base = SE3(-0.95, 0.15, 1) * SE3.Trans(ENV_OFFSET) * SE3.Rz(-pi / 2)
-        Cobot.base = SE3(0, 0.1, 1) * SE3.Trans(ENV_OFFSET)
+        irb_robot.base = SE3(0, 0.2, 1) * SE3.Trans(ENV_OFFSET)
+        Cobot.base = SE3(-0.95, 0.15, 1) * SE3.Trans(ENV_OFFSET)
         XArm_robot.base = SE3(0.95, 0.15, 1) * SE3.Trans(ENV_OFFSET)
         UR3_robot.base = SE3(1.75, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         
@@ -199,81 +200,61 @@ class RobotEnvironment:
     
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
-        self.meat_robot_ctrl.process_food_order(meat_locs, station_location=[2.45, 1.0, 1], mesh_list=meat_meshes)
-        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl, self.env, SE3[2.45, 1.0, 1], SE3[2.0, 1.0, 1], tool_orientation=any, mesh_list=meat_meshes)
-        
-        print("Processing veggies with Cobot320...")
-        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl, self.env, SE3[2.0, 1.0, 1], SE3[1.5, 1.0, 1], tool_orientation=any, mesh_list=meat_meshes)
-        self.veggie_robot_ctrl.process_food_order(veggie_locs, station_location=[1.5, 1.0, 1], mesh_list=veggie_meshes)
-        
-        # You may add a bread_robot_ctrl for breads if needed:
-        # print("Processing bread with UR3...")
-        # self.bread_robot_ctrl.process_food_order(bread_locs, station_location=[2.0, 1.0, 1.1], mesh_list=bread_meshes)
-        
-        # Optional: Implement synchronization or waiting before final assembly
-    
-    print("All ingredient placements done, assembling sandwich...")
-    # Implement sandwich assembly logic here, potentially by one robot or manually
 
-    
-    # def rmrc_slide(self, robot, start_pos, end_pos, mesh_list):
-    #     # Calls the rmrc_vertical_movement method in FoodOrderRobotv1 instance for precise sliding
-    #     if robot == self.XArm_robot:
-    #         ctrl = self.meat_robot_ctrl
-    #     elif robot == self.Cobot:
-    #         ctrl = self.veggie_robot_ctrl
-    #     else:
-    #         raise ValueError("Unsupported robot for RMRC slide")
+        pick_pose = SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET)
+        place_pose = SE3(-1.25, 0.45, 1.5) * SE3.Trans(ENV_OFFSET)
 
-    #     ctrl.rmrc_vertical_movement(robot, self.env, start_pos, end_pos, [pi,0,0], mesh_list)
+        self.cobot_ctrl.other_ik_solver(pick_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+                                        place_pose=SE3(-0.95, 0.55, 1.2) * SE3.Trans(ENV_OFFSET), 
+                                        mesh=bread_meshes, 
+                                        gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
+                                        gripper_down_orientation_place=SE3.Rz(np.pi))
+        # self.cobot_ctrl.move_pick_place(pick_pose, place_pose, mesh=meat_meshes)
 
-    # def move_robot_between(self, robot, start_q, end_pose_SE3, mesh_list):
-    #     # Calls solve_ik_robust and execute_trajectory from FoodOrderRobotv1 instance
-    #     if robot == self.XArm_robot:
-    #         ctrl = self.meat_robot_ctrl
-    #     elif robot == self.Cobot:
-    #         ctrl = self.veggie_robot_ctrl
-    #     else:
-    #         raise ValueError("Unsupported robot for move_robot_between")
+        # self.meat_robot_ctrl.process_food_order(meat_locs, station_location=[2.45, 1.0, 1], mesh_list=meat_meshes)
+        # self.meat_robot_ctrl.rmrc_vertical_movement(
+        #     self.meat_robot_ctrl.robot,
+        #     self.meat_robot_ctrl.env,
+        #     SE3(2.45, 1.0, 1).t,
+        #     SE3(2.0, 1.0, 1).t,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=meat_meshes
+        # )
+        # self.meat_robot_ctrl.rmrc_vertical_movement(
+        #     self.meat_robot_ctrl.robot,
+        #     self.meat_robot_ctrl.env,
+        #     SE3(2.0, 1.0, 1).t,
+        #     SE3(2.45, 1.0, 1.2).t,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=None
+        # )
 
-    #     q_end, success, error = ctrl.solve_ik_robust(robot, end_pose_SE3, start_q)
-    #     if not success:
-    #         print(f"IK failed: cannot reach {end_pose_SE3} (error={error})")
-    #         return False
-    #     ctrl.execute_trajectory(robot, self.env, start_q, q_end, mesh_list=mesh_list)
-    #     return True
 
-    # def process_sandwich_along_line(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes):
-    #     path = [
-    #         [2.45, 1.0, 1],    # meat robot station
-    #         [2.3, 1.0, 1],     # halfway handover point
-    #         [1.7, 1.0, 1],     # veggie robot halfway pickup
-    #         [1.5, 1.0, 1],     # veggie robot stacking station
-    #         [1.4, 1.0, 1],     # delivery point
-    #     ]
+        # print("Processing veggies with Cobot320...")
+        # self.veggie_robot_ctrl.rmrc_vertical_movement(
+        #     self.veggie_robot_ctrl.robot,
+        #     self.veggie_robot_ctrl.env,
+        #     SE3(1.7, 1.0, 1).t,
+        #     SE3(1.5, 1.0, 1).t,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=meat_meshes
+        # )
+        # self.veggie_robot_ctrl.process_food_order(veggie_locs, station_location=[1.5, 1.0, 1], mesh_list=veggie_meshes)
+        # self.veggie_robot_ctrl.rmrc_vertical_movement(
+        #     self.veggie_robot_ctrl.robot,
+        #     self.veggie_robot_ctrl.env,
+        #     SE3(1.5, 1.0, 1).t,
+        #     SE3(1.3, 1.0, 1).t,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=meat_meshes + veggie_meshes
+        # )
 
-    #     # Meat stacking
-    #     self.meat_robot_ctrl.process_food_order(meat_locs, path[0], mesh_list=meat_meshes)
-    #     print("[INFO] Meat stacking complete.")
-
-    #     # Meat robot slides sandwich to halfway handover
-    #     self.rmrc_slide(self.XArm_robot, path[0], path[1], meat_meshes)
-    #     print("[INFO] Meat robot slid sandwich to halfway handover.")
-
-    #     # Veggie robot moves itself to halfway pickup (no mesh attach)
-    #     self.move_robot_between(self.Cobot, self.Cobot.q.copy(), SE3(path[2]), None)
-    #     print("[INFO] Veggie robot moved to halfway pickup.")
-
-    #     # Veggie robot slides sandwich from halfway pickup to stacking station
-    #     self.rmrc_slide(self.Cobot, path[2], path[3], meat_meshes + veggie_meshes)
-    #     print("[INFO] Veggie robot slid sandwich to stacking station.")
-
-    #     # Veggie robot stacks veggies
-    #     self.veggie_robot_ctrl.process_food_order(veggie_locs, path[3], mesh_list=veggie_meshes)
-    #     print("[INFO] Veggie stacking complete.")
-
-    #     # Veggie robot slides assembled sandwich to delivery point
-    #     self.rmrc_slide(self.Cobot, path[3], path[4], meat_meshes + veggie_meshes)
-    #     print("[INFO] Veggie robot slid sandwich to delivery point.")
-
+        # self.veggie_robot_ctrl.rmrc_vertical_movement(
+        #     self.veggie_robot_ctrl.robot,
+        #     self.veggie_robot_ctrl.env,
+        #     SE3(1.3, 1.0, 1).t,
+        #     SE3(1.5, 1.0, 1.2).t,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=None
+        # )
 

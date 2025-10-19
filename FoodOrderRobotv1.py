@@ -119,6 +119,9 @@ class FoodOrderRobotv1:
         if grip_offset is None:
             grip_offset = self.grip_offset
 
+        if mesh_list is not None and mesh_z_offsets is None:
+            mesh_z_offsets = [0] * len(mesh_list)
+
         print(f"    RMRC: {start_pos} → {end_pos}")
         
         # Create trajectory arrays
@@ -146,8 +149,16 @@ class FoodOrderRobotv1:
             
             # Jacobian and manipulability
             J = robot.jacob0(q_matrix[i, :])
-            m = np.sqrt(linalg.det(J @ J.T))
-            m_lambda = (1 - m/self.epsilon) * 0.05 if m < self.epsilon else 0
+            det_val = linalg.det(J @ J.T)
+            det_val = np.clip(det_val, 0, None)  # Avoid negative inside sqrt
+            m = np.sqrt(det_val)
+
+            lambda_min = 0.001
+            if m < self.epsilon:
+                m_lambda = max(lambda_min, (1 - m/self.epsilon) * 0.2)  # Increased damping factor
+            else:
+                m_lambda = lambda_min
+            # m_lambda = (1 - m/self.epsilon) * 0.05 if m < self.epsilon else 0
             
             # Joint velocities
             inv_J = linalg.inv(J.T @ J + m_lambda * np.eye(6)) @ J.T
@@ -180,8 +191,72 @@ class FoodOrderRobotv1:
         if start_pos[2] > target_height:
             self.rmrc_vertical_movement(robot, env, start_pos, lowered_pos, tool_orientation)
 
+    def other_ik_solver(self, pick_pose: SE3, place_pose: SE3, mesh=None, gripper_down_orientation_pick=None, gripper_down_orientation_place=None):
+        # Gripper orientation (tool pointing down)
+        if gripper_down_orientation_pick is None:
+            gripper_down_orientation_pick = SE3.Rz(np.pi)  # Rotation about X axis by pi
+
+        if gripper_down_orientation_place is None:
+            gripper_down_orientation_place = SE3.Rz(np.pi)
+
+        # Define safe hover poses above pick and place positions
+        safe_pose_above_pick = pick_pose * gripper_down_orientation_pick
+        safe_pose_above_place = place_pose * gripper_down_orientation_place
+
+        # Initial guess for IK near robot nominal pose to help convergence (can be tuned)
+        q0_pick = np.array([0, 0, np.pi/2, 0, 0, 0])
+        q0_place = np.array([0, 0, np.pi/2, 0, 0, 0])
+
+        # Use robust IK solving (wrap solve_ik_robust) to find joint configs for safe poses
+        q_safe_pick = self.solve_ik_robust(self.robot, safe_pose_above_pick, q0_pick)
+        q_safe_place = self.solve_ik_robust(self.robot, safe_pose_above_place, q0_place)
+
+        # Use safe poses solutions as new seeds for exact pick and place poses
+        pick_pose_final = pick_pose * gripper_down_orientation_pick
+        place_pose_final = place_pose * gripper_down_orientation_place
+
+        q_pick = self.solve_ik_robust(self.robot, pick_pose_final, q_safe_pick)
+        q_place = self.solve_ik_robust(self.robot, place_pose_final, q_safe_place)
+
+        # Define trajectory segments between key poses
+        trajectory_pairs = [
+            (self.robot.q, q_safe_pick),  # current pose to safe pick hover
+            (q_safe_pick, q_pick),        # safe pick hover to pick pose
+            (q_pick, q_safe_pick),        # pick pose back to safe pick hover
+            (q_safe_pick, q_safe_place),  # safe pick hover to safe place hover
+            (q_safe_place, q_place),      # safe place hover to place pose
+            (q_place, q_safe_place)       # place pose back to safe place hover
+        ]
+
+        # Generate joint trajectories for each segment
+        # all_trajectories = []
+        for idx, (q_start, q_end) in enumerate(trajectory_pairs):
+            traj = jtraj(q_start, q_end, 50)
+            for q in traj.q:
+                # Enforce joint limits
+                q_clipped = np.clip(q, self.robot.qlim[0], self.robot.qlim[1])
+                self.robot.q = q_clipped
+                ee_pose = self.robot.fkine(self.robot.q)
+
+                if idx in [2, 3, 4] and mesh is not None:
+                    # If it's a list of meshes, update each
+                    if isinstance(mesh, list):
+                        for m in mesh:
+                            if m is not None:
+                                m.T = ee_pose
+                    else:
+                        # Single mesh case
+                        mesh.T = ee_pose
+
+                self.env.step(0.01)
+
+            # all_trajectories.append(traj)
+
+        # return all_trajectories
+
+
     # ========== Main Food Order Processing Function ==========
-    def process_food_order(self, food_locations, station_location, mesh_list = None):
+    def process_food_order(self, food_locations, station_location, mesh_list = None, tool_orientation=[pi, 0, 0]):
         """
         Main function to process food order by iterating through ingredient locations
         
@@ -198,7 +273,7 @@ class FoodOrderRobotv1:
         current_z = station_location[2]
 
         # Tool orientation (pointing downward for picking)
-        tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
+        # tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
 
         print(f"Processing order with {len(food_locations)} ingredients...")
         print(f"Station location: {station_location}")
@@ -257,8 +332,8 @@ class FoodOrderRobotv1:
             place_pos = current_station_pos
             self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh)
 
-            print(f"  Retracting from station (RMRC up)...")
-            self.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation)
+            # print(f"  Retracting from station (RMRC up)...")
+            # self.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation)
 
             # Append the attached mesh before detaching it
             if attached_mesh is not None:
