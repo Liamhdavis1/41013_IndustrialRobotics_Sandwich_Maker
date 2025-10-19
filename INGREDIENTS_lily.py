@@ -150,7 +150,6 @@ def spawn_all_piles(env):
     piles["beetroot"] = spawn_pile(env, "beetroot", 15, (-0.25, -0.1, 0.92), (-0.1, 0.1), (-0.02, 0.02), 0.002, (-0.05, 0.05))
     return piles
 
-
 def spawn_bread_row(env, ingredient, n=5, start_pos=(2.5, -0.2, 1.4), dy=0.05):
     x0, y0, z0 = start_pos
     row = []
@@ -190,12 +189,12 @@ def collect_bread_locations_and_meshes(bread_piles):
             food_meshes.append(mesh)  # Add the actual mesh object!
     return food_locations, food_meshes
 
-def collect_veggie_locations_and_meshes(piles):
+def collect_veggie_locations_and_meshes(piles, veggie_selection):
     """Collect both positions and mesh objects from ingredient piles"""
     food_locations = []
     food_meshes = []
     
-    for ingredient_name in ['beetroot']:
+    for ingredient_name in veggie_selection:
         pile_list = piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
         for mesh in pile_list[:2]: # Picks up 2
@@ -205,12 +204,12 @@ def collect_veggie_locations_and_meshes(piles):
             food_meshes.append(mesh)  # Add the actual mesh object!
     return food_locations, food_meshes
 
-def collect_meat_locations_and_meshes(piles):
+def collect_meat_locations_and_meshes(piles, meat_selection):
     """Collect both positions and mesh objects from ingredient piles"""
     food_locations = []
     food_meshes = []
     
-    for ingredient_name in ['ham']:
+    for ingredient_name in meat_selection:
         pile_list = piles.get(ingredient_name, [])
         # Take first 2 items from each pile (or adjust as needed)
         for mesh in pile_list[:2]: # Picks up 2
