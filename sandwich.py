@@ -3,7 +3,6 @@ from math import pi
 import numpy as np
 import roboticstoolbox as rtb
 
-
 class Sandwich:
     def __init__(self):
         pass
@@ -22,48 +21,73 @@ class Sandwich:
             lettucePlace = SE3(-1.01, 0.25, 1.04) @ SE3.Rz(pi / 2)
             tomatoPick = SE3(0.25, -0.35, 0.92)
             tomatoPlace = SE3(-0.98, 0.34, 1.04)
+            breadStart = SE3(-1.05, 0.2, 1.1)
+            breadEnd = SE3(-0.95, 0.2, 1.1)
             trajectory_pairs = [
+                (breadStart, lettucePick),
                 (lettucePick, lettucePlace),
                 (lettucePlace, tomatoPick),
                 (tomatoPick, tomatoPlace),
+                (breadStart, breadEnd)   # Final trajectory pair is breadStart to breadEnd
             ]
             return trajectory_pairs
 
         def Mediteranian():
             tomatoPick = SE3(0.25, -0.35, 0.92)
             tomatoPlace = SE3(-0.98, 0.34, 1.04)
+            breadStart = SE3(-1.05, 0.2, 1.1)
+            breadEnd = SE3(-0.95, 0.2, 1.1)
             trajectory_pairs = [
-                (tomatoPick, tomatoPlace)
+                (breadStart, tomatoPick),
+                (tomatoPick, tomatoPlace),
+                (breadStart, breadEnd)
             ]
             return trajectory_pairs
-        
+
         def Italian():
             tomatoPick = SE3(1.2, -0.1, 0.92)
             tomatoPlace = SE3(-1.02, 0.2, 1.03) @ SE3.Rz(pi / 2)
+            breadStart = SE3(-1.05, 0.15, 1.1)
+            breadEnd = SE3(-0.95, 0.15, 1.1)
             trajectory_pairs = [
-                (tomatoPick, tomatoPlace)
+                (breadStart, tomatoPick),
+                (tomatoPick, tomatoPlace),
+                (breadStart, breadEnd)
             ]
             return trajectory_pairs
-        
+
         def BeefAndBeetroot():
             beefPick = SE3(1.2, -0.1, 0.92)
             beefPlace = SE3(-1.02, 0.2, 1.03) @ SE3.Rz(pi / 2)
             lettucePick = SE3(0.25, -0.35, 0.92)
             lettucePlace = SE3(-1.01, 0.25, 1.04) @ SE3.Rz(pi / 2)
+            breadStart = SE3(-1.05, 0.20, 1.1)
+            breadEnd = SE3(-0.95, 0.20, 1.1)
             trajectory_pairs = [
-
+                (breadStart, beefPick),
+                (beefPick, beefPlace),
+                (beefPlace, lettucePick),
+                (lettucePick, lettucePlace),
+                (breadStart, breadEnd)
             ]
             return trajectory_pairs
-        
+
         def SmokeyChicken():
             chickenPick = SE3(1.2, -0.1, 0.92)
             chickenPlace = SE3(-1.02, 0.2, 1.03) @ SE3.Rz(pi / 2)
             lettucePick = SE3(0.25, -0.35, 0.92)
             lettucePlace = SE3(-1.01, 0.25, 1.04) @ SE3.Rz(pi / 2)
+            breadStart = SE3(-1.05, 0.20, 1.1)
+            breadEnd = SE3(-0.95, 0.20, 1.1)
             trajectory_pairs = [
+                (breadStart, chickenPick),
+                (chickenPick, chickenPlace),
+                (chickenPlace, lettucePick),
+                (lettucePick, lettucePlace),
+                (breadStart, breadEnd)
             ]
             return trajectory_pairs
-        
+
         def Veggie():
             lettucePick = SE3(0.25, -0.35, 0.92)
             lettucePlace = SE3(-1.01, 0.25, 1.04) @ SE3.Rz(pi / 2)
@@ -71,12 +95,16 @@ class Sandwich:
             tomatoPlace = SE3(-0.98, 0.34, 1.04)
             beetrootPick = SE3(0.25, -0.35, 0.92)
             beetrootPlace = SE3(-1.01, 0.25, 1.04) @ SE3.Rz(pi / 2)
+            breadStart = SE3(-1.05, 0.20, 1.1)
+            breadEnd = SE3(-0.95, 0.20, 1.1)
             trajectory_pairs = [
+                (breadStart, lettucePick),
                 (lettucePick, lettucePlace),
                 (lettucePlace, tomatoPick),
                 (tomatoPick, tomatoPlace),
                 (tomatoPlace, beetrootPick),
                 (beetrootPick, beetrootPlace),
+                (breadStart, breadEnd)
             ]
             return trajectory_pairs
 
@@ -89,29 +117,74 @@ class Sandwich:
             "Veggie": Veggie()
         }
 
+
     def Bot3(self):
         def Classic():
-            
+            hamPick = SE3(-0.99, 0.34, 1.01)
+            hamPlace = SE3(-1.02, 0.25, 1.05)
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, hamPick),
+                (hamPick, hamPlace),
+                (breadStart, breadEnd)   # final pair
+            ]
             return trajectory_pairs
 
         def Mediteranian():
-            
+            chickenPick = SE3(-0.99, 0.34, 1.01)
+            chickenPlace = SE3(-1.02, 0.25, 1.05)
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, chickenPick),
+                (chickenPick, chickenPlace),
+                (breadStart, breadEnd)
+            ]
             return trajectory_pairs
-        
+
         def Italian():
-            
+            salamiPick = SE3(-0.99, 0.34, 1.01)
+            salamiPlace = SE3(-1.02, 0.25, 1.05)
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, salamiPick),
+                (salamiPick, salamiPlace),
+                (breadStart, breadEnd)
+            ]
             return trajectory_pairs
-        
+
         def BeefAndBeetroot():
-            
+            beefPick = SE3(-0.99, 0.34, 1.01)
+            beefPlace = SE3(-1.02, 0.25, 1.05)
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, beefPick),
+                (beefPick, beefPlace),
+                (breadStart, breadEnd)
+            ]
             return trajectory_pairs
-        
+
         def SmokeyChicken():
-            
+            chickenPick = SE3(-0.99, 0.34, 1.01)
+            chickenPlace = SE3(-1.02, 0.25, 1.05)
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, chickenPick),
+                (chickenPick, chickenPlace),
+                (breadStart, breadEnd)
+            ]
             return trajectory_pairs
-        
+
         def Veggie():
-            
+            breadStart = SE3(-1.05, 0.2, 1.15)
+            breadEnd = SE3(-0.95, 0.2, 1.15)
+            trajectory_pairs = [
+                (breadStart, breadEnd)
+            ]
             return trajectory_pairs
 
         return {
@@ -122,6 +195,7 @@ class Sandwich:
             "Smokey Chicken": SmokeyChicken(),
             "Veggie": Veggie()
         }
+
 
     def Bot4(self):
         BreadTopPick = SE3(-0.7, 0.25, 1.0)
@@ -169,7 +243,6 @@ class Sandwich:
                 for q in traj.q:
                     q_clipped = np.clip(q, robot.qlim[0], robot.qlim[1])
                     robot.q = q_clipped
-
 
 if __name__ == "__main__":
     class DummyRobot:

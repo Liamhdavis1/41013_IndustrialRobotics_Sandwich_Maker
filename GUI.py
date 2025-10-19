@@ -1,25 +1,41 @@
 import tkinter as tk
 from tkinter import ttk
-from sandwich import Sandwich  # Import the Sandwich class
+from IngredientsLiam import RobotEnvironment  # Import the environment module
 
-def ingredient_clicked(Sandwiches):
-    print("Button clicked:", Sandwiches)
-    # Use the bread object to make sandwich based on choice
-    bread.Make_Sandwich(Sandwiches)
+ingredients = ["ham", "tomato", "lettuce", "salami", "beef", "chicken", "cucumber", "beetroot"]
+meat_ingredients = {"ham", "salami", "beef", "chicken"}
+veggie_ingredients = {"tomato", "lettuce", "cucumber", "beetroot"}
 
-root = tk.Tk()
-root.title("Ingredients Selector")
+class IngredientSelector(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Ingredients Selector")
 
-sandwich_frame = ttk.LabelFrame(root, text="What sandwich would you like?")
-sandwich_frame.pack(pady=10, ipadx=10, padx=10)
+        self.ingredient_vars = {}
+        self.create_widgets()
 
-Sandwiches = ["Classic", "Mediteranian", "Italian", "Beef & Beetroot", "Smokey Chicken", "Veggie"]
+        # Initialize robot environment once
+        self.robot_env = RobotEnvironment()
 
-bread = Sandwich()
+    def create_widgets(self):
+        frame = ttk.LabelFrame(self, text="Select Ingredients")
+        frame.pack(padx=10, pady=10, ipadx=10, ipady=10)
 
-for i, ing in enumerate(Sandwiches):
-    btn = ttk.Button(sandwich_frame, text=ing, width=20,
-                     command=lambda ing=ing: ingredient_clicked(ing))
-    btn.grid(row=i//2, column=i%2, sticky=tk.W, padx=10, pady=5)
+        for i, ing in enumerate(ingredients):
+            var = tk.BooleanVar(value=False)
+            chk = ttk.Checkbutton(frame, text=ing.capitalize(), variable=var)
+            chk.grid(row=i // 2, column=i % 2, sticky=tk.W, padx=10, pady=5)
+            self.ingredient_vars[ing] = var
 
-root.mainloop()
+        ttk.Button(self, text="Confirm Selection", command=self.ingredient_selected).pack(pady=5)
+
+    def ingredient_selected(self):
+        selected = [ing for ing, var in self.ingredient_vars.items() if var.get()]
+        meat_selection = [ing for ing in selected if ing in meat_ingredients]
+        veggie_selection = [ing for ing in selected if ing in veggie_ingredients]
+
+        print("Selected meats:", meat_selection)
+        print("Selected veggies:", veggie_selection)
+
+        # Pass selections to robot environment for processing
+        self.robot_env.process_order(meat_selection, veggie_selection)
