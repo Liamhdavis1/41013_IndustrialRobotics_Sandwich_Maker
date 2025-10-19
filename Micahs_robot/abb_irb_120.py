@@ -76,7 +76,7 @@ class abb_irb_120(DHRobot3D):
 
         # Joint limits (typical)
         qlim = [
-            [np.deg2rad(-165), np.deg2rad(+165)],   # J1
+            [np.deg2rad(-360), np.deg2rad(+360)],   # J1
             [np.deg2rad(-110), np.deg2rad(+110)],   # J2
             [np.deg2rad(-110), np.deg2rad(+70)],    # J3
             [np.deg2rad(-160), np.deg2rad(+160)],   # J4
