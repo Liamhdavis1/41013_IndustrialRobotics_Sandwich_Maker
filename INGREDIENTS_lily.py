@@ -181,45 +181,42 @@ def spawn_all_piles(env):
 #     return bread_piles
 
 
-# def spawn_bread_row(env, ingredient="bread_bottom", n=3, start_pos=(2.2, -0.2, 1), dx=0.18):
-#     """Spawn a single row of bread slices"""
-#     bread = []
-#     x0, y0, z0 = start_pos
-#     for i in range(n):
-#         pose = SE3(x0 - i * dx, y0, z0)  # spread along x-axis
-#         slice_mesh = spawn_ingredient(env, ingredient, pose)
-#         bread.append(slice_mesh)
-#     return bread
+def spawn_bread_row(env, ingredient="bread_bottom", n=3, start_pos=(2.2, -0.2, 1), dx=0.18):
+    """Spawn a single row of bread slices"""
+    bread = {}
+    x0, y0, z0 = start_pos
+    for i in range(n):
+        pose = SE3(x0 - i * dx, y0, z0)  # spread along x-axis
+        slice_mesh = spawn_ingredient(env, ingredient, pose)
+        bread.append(slice_mesh)
+    return bread
 
-def spawn_bread(env):
-    bread_piles = {}
-    storage_z = [1.4, 1.1]
-    for ingredient in ["bread_bottom", "bread_top"]:
-        bread_piles[ingredient] = []
-        for z in storage_z:
-            for i in range(5):
-                pose = SE3(2.2, -0.2 + i * 0.2, z) @ SE3.Rz(pi / 2)
-                slice_mesh = spawn_ingredient(env, ingredient, pose)
-                bread_piles[ingredient].append(slice_mesh)
-    return bread_piles
+# def spawn_bread(env):
+#     bread_piles = {}
+#     storage_z = [1.4, 1.1]
+#     for ingredient in ["bread_bottom", "bread_top"]:
+#         bread_piles[ingredient] = []
+#         for z in storage_z:
+#             for i in range(5):
+#                 pose = SE3(2.2, -0.2 + i * 0.2, z) @ SE3.Rz(pi / 2)
+#                 slice_mesh = spawn_ingredient(env, ingredient, pose)
+#                 bread_piles[ingredient].append(slice_mesh)
+#     return bread_piles
 
 
 
-def collect_bread_locations_and_meshes(bread_dict, ingredient_name='bread_bottom'):
+def collect_bread_locations_and_meshes(bread):
     food_locations = []
     food_meshes = []
     for ingredient_name in ['bread_top', 'bread_bottom']:
-        pile_list = bread_dict.get(ingredient_name, [])
+        pile_list = bread.get(ingredient_name, [])
         for mesh in pile_list[:1]:  # pick first slice
             pose_se3 = SE3(mesh.T)
             pos = pose_se3.t
             food_locations.append([pos[0], pos[1], pos[2]])
             # food_locations.append(pose_se3)
             food_meshes.append(mesh)
-
     return food_locations, food_meshes
-
-
 
 
 def collect_veggie_locations_and_meshes(piles):
@@ -267,7 +264,7 @@ def main():
     # Spawn piles of ingredients
 # Spawn piles of ingredients
     piles = spawn_all_piles(env)
-    bread = spawn_bread(env)
+    bread = spawn_bread_row(env)
 
     # Collect bread locations and meshes
 
@@ -279,9 +276,8 @@ def main():
     # === Bread robot ===
     bread_robot = FoodOrderRobotv1(robot=UR3_robot, env=env)
     bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread)
-    print(bread_locations)
     bread_station_location = [1.6,0.4,1]
-    bread_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
+    bread_robot.process_food_order(bread_locations, bread_station_location, mesh_list=bread_meshes)
     # bread_robot.other_ik_solver(pick_pose=SE3(2.2, -0.2, 1.4), 
     #                             place_pose=SE3(1.6,0.4,1), 
     #                             mesh=None, 
@@ -309,99 +305,99 @@ def main():
 
 
 
-def bread():
-    env = swift.Swift()
+# def bread():
+#     env = swift.Swift()
     
-    env.launch(realtime=True)
-    spawn_items(env)
-    bread = spawn_bread(env)
+#     env.launch(realtime=True)
+#     spawn_items(env)
+#     bread = spawn_bread(env)
 
-    UR3_robot, XArm_robot, irb_robot = setup_robots(env)
+#     UR3_robot, XArm_robot, irb_robot = setup_robots(env)
 
-    bread_robot = FoodOrderRobotv1(robot=UR3_robot, env=env)
-    robot = UR3_robot
+#     bread_robot = FoodOrderRobotv1(robot=UR3_robot, env=env)
+#     robot = UR3_robot
 
-    bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread)
-    station_location = [1.4,0.2,1] 
-    # Initialize current stack height at assembly station base height
-    current_z = station_location[2]
+#     bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread)
+#     station_location = [1.4,0.2,1] 
+#     # Initialize current stack height at assembly station base height
+#     current_z = station_location[2]
 
-    # Tool orientation (pointing sidewards for picking)
-    tool_orientation = [0, -pi/2, pi]  
+#     # Tool orientation (pointing sidewards for picking)
+#     tool_orientation = [0, -pi/2, pi]  
 
-    print(f"Processing order with {len(bread_locations)} ingredients...")
-    print(f"Station location: {bread_locations}")
+#     print(f"Processing order with {len(bread_locations)} ingredients...")
+#     print(f"Station location: {bread_locations}")
 
-    hover_height = 0.2
+#     hover_height = 0.2
 
-    placed_meshes = []
+#     placed_meshes = []
 
-    # Process each food item in the order list
-    for i, bread_pos in enumerate(bread_locations):
-        mesh = None
-        if bread_meshes is not None and i < len(bread_meshes):
-            mesh = bread_meshes[i]
-            print(f"  Attaching mesh {i}: {type(mesh)}")
+#     # Process each food item in the order list
+#     for i, bread_pos in enumerate(bread_locations):
+#         mesh = None
+#         if bread_meshes is not None and i < len(bread_meshes):
+#             mesh = bread_meshes[i]
+#             print(f"  Attaching mesh {i}: {type(mesh)}")
 
-        # Calculate hover position
-        hover_above_food = [bread_pos[0] - hover_height, bread_pos[1], bread_pos[2]]
-        hover_pose = SE3(transl(hover_above_food) @ rpy2tr(*tool_orientation))
+#         # Calculate hover position
+#         hover_above_food = [bread_pos[0] - hover_height, bread_pos[1], bread_pos[2]]
+#         hover_pose = SE3(transl(hover_above_food) @ rpy2tr(*tool_orientation))
 
-        q_hover, success, error = bread_robot.solve_ik_robust(robot, hover_pose, robot.q)
-        if not success:
-            print(f"  Failed to reach hover position for ingredient {i+1}")
-            continue
+#         q_hover, success, error = bread_robot.solve_ik_robust(robot, hover_pose, robot.q)
+#         if not success:
+#             print(f"  Failed to reach hover position for ingredient {i+1}")
+#             continue
 
-        print(f"  Moving to hover above food (IK+jtraj)...")
-        bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
+#         print(f"  Moving to hover above food (IK+jtraj)...")
+#         bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
         
-        print(f"  Picking up ingredient {i+1} (RMRC down)...")
-        bread_robot.rmrc_vertical_movement(robot, env, hover_above_food, bread_pos, tool_orientation, mesh=None)
+#         print(f"  Picking up ingredient {i+1} (RMRC down)...")
+#         bread_robot.rmrc_vertical_movement(robot, env, hover_above_food, bread_pos, tool_orientation, mesh=None)
 
-        print(f"  Attaching mesh {i} to end effector...")
-        attached_mesh = mesh
+#         print(f"  Attaching mesh {i} to end effector...")
+#         attached_mesh = mesh
         
-        print(f"  Lifting ingredient {i+1} (RMRC up)...")
-        bread_robot.rmrc_vertical_movement(robot, env, bread_pos, hover_above_food, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+#         print(f"  Lifting ingredient {i+1} (RMRC up)...")
+#         bread_robot.rmrc_vertical_movement(robot, env, bread_pos, hover_above_food, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
         
-        # Station hover
-        # Calculate current station location with stacking
-        # above_station_pos = [
-        #     hover_above_food[0] + 0.1,
-        #     hover_above_food[1] + 0.4,
-        #     hover_above_food[2]  # Use updated stack height
-        # ]
+#         # Station hover
+#         # Calculate current station location with stacking
+#         # above_station_pos = [
+#         #     hover_above_food[0] + 0.1,
+#         #     hover_above_food[1] + 0.4,
+#         #     hover_above_food[2]  # Use updated stack height
+#         # ]
 
-        # above_station_pose = SE3(transl(above_station_pos) @ rpy2tr(*tool_orientation))
+#         # above_station_pose = SE3(transl(above_station_pos) @ rpy2tr(*tool_orientation))
 
-        # # Solve IK for that pose
-        # q_above_station, success, error = bread_robot.solve_ik_robust(robot, above_station_pose, robot.q)
-        # if not success:
-        #     print("  Could not solve IK for above station position")
-        #     continue
-        # bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_above_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
-        # input('delay')
-        # Hover above the current stack height
-        hover_above_station = [station_location[0], station_location[1], station_location[2] + hover_height]
-        tool_orientation = [0, -pi/2, 0]  
+#         # # Solve IK for that pose
+#         # q_above_station, success, error = bread_robot.solve_ik_robust(robot, above_station_pose, robot.q)
+#         # if not success:
+#         #     print("  Could not solve IK for above station position")
+#         #     continue
+#         # bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_above_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
+#         # input('delay')
+#         # Hover above the current stack height
+#         hover_above_station = [station_location[0], station_location[1], station_location[2] + hover_height]
+#         tool_orientation = [0, -pi/2, 0]  
 
-        station_hover_pose = SE3(transl(hover_above_station) @ rpy2tr(*tool_orientation))
-        q_station, success, error = bread_robot.solve_ik_robust(robot, station_hover_pose, robot.q)
-        if not success:
-            print(f"  Failed to reach station hover position for ingredient {i + 1}")
-            continue
+#         station_hover_pose = SE3(transl(hover_above_station) @ rpy2tr(*tool_orientation))
+#         q_station, success, error = bread_robot.solve_ik_robust(robot, station_hover_pose, robot.q)
+#         if not success:
+#             print(f"  Failed to reach station hover position for ingredient {i + 1}")
+#             continue
 
-        print(f"  Moving to hover above station (IK+jtraj)...")
-        bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+#         print(f"  Moving to hover above station (IK+jtraj)...")
+#         bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
-        print(f"  Placing ingredient {i+1} at station (RMRC down)...")
-        place_pos = station_location
-        bread_robot.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+#         print(f"  Placing ingredient {i+1} at station (RMRC down)...")
+#         place_pos = station_location
+#         bread_robot.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
-        print(f"  Retracting from station (RMRC up)...")
-        bread_robot.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
-        tool_orientation = [0, -pi/2, pi]  
+#         print(f"  Retracting from station (RMRC up)...")
+#         bread_robot.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+#         tool_orientation = [0, -pi/2, pi]  
         
 # def bread():
 #     env = swift.Swift()
@@ -492,7 +488,7 @@ def bread():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
     # bread()
     env.hold()
 

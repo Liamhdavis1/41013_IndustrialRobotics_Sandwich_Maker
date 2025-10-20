@@ -54,15 +54,22 @@ class Cobot320(DHRobot3D):
         #     links.append(link)
         # return links
     
-        qlim = [
-            [-pi, pi],
-            [deg2rad(-180), deg2rad(0)],
-            [deg2rad(-165), deg2rad(165)],  # Joint 3: ±165°
-            [deg2rad(-165), deg2rad(165)],  # Joint 4: ±165°
-            [deg2rad(-165), deg2rad(165)],  # Joint 5: ±165°
-            [-pi, pi]
+        # qlim = [
+        #     [-pi, pi],
+        #     [deg2rad(-180), deg2rad(0)],
+        #     [deg2rad(-165), deg2rad(165)],  # Joint 3: ±165°
+        #     [deg2rad(-165), deg2rad(165)],  # Joint 4: ±165°
+        #     [deg2rad(-165), deg2rad(165)],  # Joint 5: ±165°
+        #     [-pi, pi]
+        # ]
+        qlim = [ 
+            [-2*pi, 2*pi],    # 1st revolute
+            [-pi, pi/2],    # 2nd revolute
+            [-pi, pi],          # 3rd revolute (LIMITED: only positive, elbow up)
+            [-2*pi, 2*pi],    # 4th revolute
+            [-2*pi, 2*pi],    # 5th revolute
+            [-2*pi, 2*pi]     # 6th revolute
         ]
-
         links = []
         for i in range(6):
             link = rtb.RevoluteDH(d=d[i], a=a[i], alpha=alpha[i], offset=offset[i], qlim=qlim[i])

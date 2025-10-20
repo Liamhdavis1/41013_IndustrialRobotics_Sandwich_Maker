@@ -168,7 +168,7 @@ class RobotEnvironment:
         spawn_ingredient(env, "bench", SE3(*ENV_OFFSET))
         spawn_ingredient(env, "glass", SE3(0.5, 0, 0)*SE3(*ENV_OFFSET))
         spawn_ingredient(env, "bread_rack", SE3(-0.15, 0, 0)*SE3(ENV_OFFSET))
-        spawn_ingredient(env, "tray", SE3(1.3, 0.45, 1)*SE3(*ENV_OFFSET))
+        # spawn_ingredient(env, "tray", SE3(1.3, 0.45, 1)*SE3(*ENV_OFFSET))
 
     def spawn_bread(self, env):
         bread_piles = {}
@@ -221,14 +221,29 @@ class RobotEnvironment:
     
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
+        tray_mesh = spawn_ingredient(self.env, "tray", SE3(1.3, 0.45, 1) * SE3(*ENV_OFFSET))
 
 
-        # bread = self.spawn_bread(self.env)
-        # bread_locations, bread_meshes = self.collect_bread_locations_and_meshes(bread)
-        # bread_station_location = [3, 0.8, 1.0] 
-        # self.UR3_robot.bread2(bread_locations, bread_station_location, mesh_list=bread_meshes)
 
-        # self.UR3_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
+        bread = self.spawn_bread(self.env)
+        bread_locations, bread_meshes = self.collect_bread_locations_and_meshes(bread)
+        bread_station_location = [3, 0.8, 1.0] 
+        self.UR3_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
+
+        placed_meshes = bread_meshes + [tray_mesh]
+        # mesh_offsets = [SE3(m.T).t - SE3(tray_mesh.T).t for m in placed_meshes]
+
+        start_pos = SE3(3, 0.6, 1).t
+        end_pos = SE3(2.45, 0.8, 1).t
+
+        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
+                                                    self.env,
+                                                    start_pos,
+                                                    end_pos,
+                                                    tool_orientation=[pi,0,0],
+                                                    mesh_list=placed_meshes,)
+                                                    # mesh_z_offsets=mesh_offsets)
+
 
         # self.UR3_robot.other_ik_solver(pick_pose=SE3(3.7, 0.3, 1.4), 
         #                                 place_pose=SE3(3.2, 0.5, 1.1), 
@@ -243,6 +258,18 @@ class RobotEnvironment:
         #                                 gripper_down_orientation_place=SE3.Rz(np.pi))
         # self.cobot_ctrl.move_pick_place(pick_pose, place_pose, mesh=meat_meshes)
 
+        # Precompute offsets relative to the first mesh
+
+        # self.meat_robot_ctrl.rmrc_vertical_movement(
+        #     self.meat_robot_ctrl.robot,
+        #     self.env,
+        #     SE3(3, 0.6, 1).t,
+        #     SE3(2.45, 0.8, 1).t,
+        #     tool_orientation=[pi,0,0],
+        #     mesh_list=[tray_mesh] + bread_meshes)
+
+        # Before calling, update their positions based on parent if needed
+
 
 
         # -----------------collect meat----------------
@@ -256,7 +283,7 @@ class RobotEnvironment:
                                                     SE3(2.45, 1, 1).t,
                                                     SE3(1.75, 0.88, 1).t,
                                                     tool_orientation=[pi,0,0],
-                                                    mesh_list=meat_meshes)
+                                                    mesh_list=meat_meshes + bread_meshes + [tray_mesh])
         
         self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot, 
                                                     self.env, 
@@ -280,7 +307,7 @@ class RobotEnvironment:
                                                     SE3(1.72, 0.88, 1).t,
                                                     SE3(1.5, 1, 1).t,
                                                     tool_orientation=[pi,0,0],
-                                                    mesh_list=meat_meshes)
+                                                    mesh_list=meat_meshes + bread_meshes + [tray_mesh])
         
         # -----------------collect veggies----------------
         self.veggie_robot_ctrl.process_food_order(veggie_locs, 
@@ -293,7 +320,7 @@ class RobotEnvironment:
                                                     SE3(1.5, 1.0, 1).t,
                                                     SE3(1.3, 1.0, 1).t,
                                                     tool_orientation=[pi,0,0],
-                                                    mesh_list=meat_meshes + veggie_meshes)
+                                                    mesh_list=meat_meshes + veggie_meshes + bread_meshes + [tray_mesh])
         
         self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot, 
                                                     self.env, 

@@ -1,7 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
+import os
 import threading
 from IngredientsLiam import RobotEnvironment  # Import the environment module
+from CollisionDetectionInEnvronment import CollsionDetection
+from ir_support import EllipsoidRobot
 
 ingredients = ["ham", "tomato", "lettuce", "salami", "beef", "chicken", "cucumber", "beetroot"]
 meat_ingredients = {"ham", "salami", "beef", "chicken"}
@@ -79,3 +82,12 @@ class IngredientSelector(tk.Tk):
     def set_estop_for_all(self, status):
         for robot_ctrl in [self.meat_robot_ctrl, self.veggie_robot_ctrl, self.cobot_ctrl, self.UR3_robot]:
             robot_ctrl.set_estop(status)
+
+    def Collsion(robot):
+        stl_path = os.path.join(os.path.dirname(__file__), "env", "benchv2.stl")
+        bench_points = CollsionDetection.load_mesh_points(stl_path, num_points=8000)
+        ellipsoid_robot = EllipsoidRobot(robot)
+        ellipsoid_robot.ellipsoid_for_robot_links(robot.q)
+        collisions = CollsionDetection.detect_collisions(ellipsoid_robot, bench_points)
+
+        
