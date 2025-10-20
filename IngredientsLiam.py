@@ -223,11 +223,12 @@ class RobotEnvironment:
         print("Processing meats with XArm6...")
 
 
-        bread = self.spawn_bread(self.env)
-        bread_locations, bread_meshes = self.collect_bread_locations_and_meshes(bread)
-        bread_station_location = [3, 0.8, 1.0] 
+        # bread = self.spawn_bread(self.env)
+        # bread_locations, bread_meshes = self.collect_bread_locations_and_meshes(bread)
+        # bread_station_location = [3, 0.8, 1.0] 
         # self.UR3_robot.bread2(bread_locations, bread_station_location, mesh_list=bread_meshes)
-        self.UR3_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
+
+        # self.UR3_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
 
         # self.UR3_robot.other_ik_solver(pick_pose=SE3(3.7, 0.3, 1.4), 
         #                                 place_pose=SE3(3.2, 0.5, 1.1), 
