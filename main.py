@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
 
 
-# slidding
+# sliding
 # 1. moving stations closer to robots
 # 2. make env smaller
 

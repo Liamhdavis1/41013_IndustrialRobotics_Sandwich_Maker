@@ -33,7 +33,7 @@ def setup_robots(env):
     # LinearUR3_robot.base = SE3(1.7,-0.2,1) *  SE3.Rx(pi/2)
     # LinearUR3_robot.add_to_env(env)
 
-    UR3_robot.base = SE3(1.8,-0.1,1) * SE3.Rz(-pi/2)
+    UR3_robot.base = SE3(1.75,0,1) * SE3.Rz(-pi/2)
     UR3_robot.add_to_env(env)
 
     return UR3_robot, XArm_robot, irb_robot
@@ -194,7 +194,7 @@ def spawn_all_piles(env):
 def spawn_bread(env):
     bread_piles = {}
     storage_z = [1.4, 1.1]
-    for ingredient in ["bread_bottom"]:
+    for ingredient in ["bread_bottom", "bread_top"]:
         bread_piles[ingredient] = []
         for z in storage_z:
             for i in range(5):
@@ -208,14 +208,14 @@ def spawn_bread(env):
 def collect_bread_locations_and_meshes(bread_dict, ingredient_name='bread_bottom'):
     food_locations = []
     food_meshes = []
-
-    pile_list = bread_dict.get(ingredient_name, [])
-    for mesh in pile_list[:2]:  # pick first slice
-        pose_se3 = SE3(mesh.T)
-        pos = pose_se3.t
-        food_locations.append([pos[0], pos[1], pos[2]])
-        # food_locations.append(pose_se3)
-        food_meshes.append(mesh)
+    for ingredient_name in ['bread_top', 'bread_bottom']:
+        pile_list = bread_dict.get(ingredient_name, [])
+        for mesh in pile_list[:1]:  # pick first slice
+            pose_se3 = SE3(mesh.T)
+            pos = pose_se3.t
+            food_locations.append([pos[0], pos[1], pos[2]])
+            # food_locations.append(pose_se3)
+            food_meshes.append(mesh)
 
     return food_locations, food_meshes
 
@@ -281,11 +281,12 @@ def main():
     bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread)
     print(bread_locations)
     bread_station_location = [1.6,0.4,1]
-    bread_robot.other_ik_solver(pick_pose=SE3(2.2, -0.2, 1.4), 
-                                place_pose=SE3(1.6,0.4,1), 
-                                mesh=None, 
-                                gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
-                                gripper_down_orientation_place=SE3.Ry(np.pi/2))
+    bread_robot.bread_movement(bread_locations, bread_station_location, mesh_list=bread_meshes)
+    # bread_robot.other_ik_solver(pick_pose=SE3(2.2, -0.2, 1.4), 
+    #                             place_pose=SE3(1.6,0.4,1), 
+    #                             mesh=None, 
+    #                             gripper_down_orientation_pick=SE3.Ry(np.pi/2), 
+    #                             gripper_down_orientation_place=SE3.Ry(np.pi/2))
     # bread_robot.process_food_order(bread_locations, bread_station_location, mesh_list=bread_meshes)  
     input('delay')
     # === Meat robot ===
@@ -303,6 +304,11 @@ def main():
     # Hold the environment for inspection
     env.hold()
 
+
+
+
+
+
 def bread():
     env = swift.Swift()
     
@@ -316,12 +322,12 @@ def bread():
     robot = UR3_robot
 
     bread_locations, bread_meshes = collect_bread_locations_and_meshes(bread)
-    station_location = [1.75,0.2,1] 
+    station_location = [1.4,0.2,1] 
     # Initialize current stack height at assembly station base height
     current_z = station_location[2]
 
-    # Tool orientation (pointing downward for picking)
-    tool_orientation = [0, -pi/2, -pi]  
+    # Tool orientation (pointing sidewards for picking)
+    tool_orientation = [0, -pi/2, pi]  
 
     print(f"Processing order with {len(bread_locations)} ingredients...")
     print(f"Station location: {bread_locations}")
@@ -356,7 +362,7 @@ def bread():
         attached_mesh = mesh
         
         print(f"  Lifting ingredient {i+1} (RMRC up)...")
-        bread_robot.rmrc_vertical_movement(robot, env, bread_pos, hover_above_food, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
+        bread_robot.rmrc_vertical_movement(robot, env, bread_pos, hover_above_food, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
         
         # Station hover
@@ -378,6 +384,7 @@ def bread():
         # input('delay')
         # Hover above the current stack height
         hover_above_station = [station_location[0], station_location[1], station_location[2] + hover_height]
+        tool_orientation = [0, -pi/2, 0]  
 
         station_hover_pose = SE3(transl(hover_above_station) @ rpy2tr(*tool_orientation))
         q_station, success, error = bread_robot.solve_ik_robust(robot, station_hover_pose, robot.q)
@@ -386,14 +393,15 @@ def bread():
             continue
 
         print(f"  Moving to hover above station (IK+jtraj)...")
-        bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
+        bread_robot.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
         print(f"  Placing ingredient {i+1} at station (RMRC down)...")
         place_pos = station_location
-        bread_robot.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
+        bread_robot.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
         print(f"  Retracting from station (RMRC up)...")
-        bread_robot.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2))
+        bread_robot.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation, grip_offset = SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+        tool_orientation = [0, -pi/2, pi]  
         
 # def bread():
 #     env = swift.Swift()
@@ -485,6 +493,7 @@ def bread():
 
 if __name__ == "__main__":
     # main()
-    bread()
+    # bread()
+    env.hold()
 
 
