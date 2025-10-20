@@ -36,6 +36,21 @@ class FoodOrderRobotv1:
 
         # Define grip offset for mesh attachment (adjust as needed)
         self.grip_offset = SE3.Trans(0, 0, 0) * SE3.Rx(np.pi)  # Tool pointing down
+        self.estop = False
+
+    # ========== E-Stop ==========
+    def set_estop(self, status: bool):
+        if status != self.estop:
+            self.estop = status
+            if status:
+                print("Emergency Stop enabled! Robot motions will pause.")
+            else:
+                print("Emergency Stop released! Resuming robot motions.")
+
+    def wait_if_estop(self):
+        # Wait (blocking) while estop is active
+        while self.estop:
+            time.sleep(0.1)
     
     # ========== IK and Trajectory Functions ==========
     def enforce_joint_limits(self, q, qlim):
@@ -59,6 +74,7 @@ class FoodOrderRobotv1:
         """
         Robust IK solver with multiple strategies
         """
+        self.wait_if_estop()
         qlim = robot.qlim
         tol = self.convergence_tolerance
         
@@ -76,6 +92,7 @@ class FoodOrderRobotv1:
         # Try multiple guesses
         guesses = self.generate_initial_guesses(robot, q_current)
         for i, q0 in enumerate(guesses):
+            self.wait_if_estop()
             ik_result = robot.ikine_LM(
                 target_pose, q0=q0, mask=[1, 1, 1, 1, 1, 1],
                 ilimit=2000, slimit=3, tol=tol, joint_limits=True
@@ -89,11 +106,13 @@ class FoodOrderRobotv1:
         return q_current, False, float('inf')
 
     def execute_trajectory(self, robot, env, q_start, q_end, steps=50, mesh=None, mesh_list=None, grip_offset=None):
+        self.wait_if_estop()
         if grip_offset is None:
             grip_offset = self.grip_offset
         
         traj = jtraj(q_start, q_end, steps)
         for q in traj.q:
+            self.wait_if_estop()
             robot.q = q
             if mesh:
                 mesh.T = robot.fkine(q) * grip_offset
@@ -116,6 +135,7 @@ class FoodOrderRobotv1:
         end_pos: [x, y, z] ending position  
         tool_orientation: [roll, pitch, yaw] in radians
         """
+        self.wait_if_estop()
         if grip_offset is None:
             grip_offset = self.grip_offset
 
@@ -134,6 +154,7 @@ class FoodOrderRobotv1:
         
         # RMRC control loop
         for i in range(self.rmrc_steps - 1):
+            self.wait_if_estop()
             T_now = robot.fkine(q_matrix[i, :]).A
             delta_x = x[:, i+1] - T_now[:3, 3]
             
@@ -192,6 +213,7 @@ class FoodOrderRobotv1:
             self.rmrc_vertical_movement(robot, env, start_pos, lowered_pos, tool_orientation)
 
     def other_ik_solver(self, pick_pose: SE3, place_pose: SE3, mesh=None, gripper_down_orientation_pick=None, gripper_down_orientation_place=None):
+        self.wait_if_estop()
         # Gripper orientation (tool pointing down)
         if gripper_down_orientation_pick is None:
             gripper_down_orientation_pick = SE3.Rz(np.pi)  # Rotation about X axis by pi
@@ -238,6 +260,7 @@ class FoodOrderRobotv1:
         for idx, (q_start, q_end) in enumerate(trajectory_pairs):
             traj = jtraj(q_start, q_end, 50)
             for q in traj.q:
+                self.wait_if_estop()
                 # Enforce joint limits
                 q_clipped = np.clip(q, self.robot.qlim[0], self.robot.qlim[1])
                 self.robot.q = q_clipped
