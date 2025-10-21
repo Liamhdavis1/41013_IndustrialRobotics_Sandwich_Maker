@@ -158,7 +158,7 @@ class processes:
         # Check for collision at this step
             collisions = CollsionDetection.detect_collisions(self.ellipsoid_meat, self.bench_points)
             if collisions:
-                print(f"Collision detected! Movement stopped.")
+                print(f"⚠️ Collision detected! Movement stopped.")
                 self.meat_robot_ctrl.set_estop(True)  # stop robot immediately
                 return True
 
@@ -168,13 +168,22 @@ class processes:
                 self.env.step()  # Swift or other env
             else:
                 self.meat_robot_ctrl.robot.plot(q, block=False)
-                # print("No collision detected along trajectory. Adjust joint angles to force collision.")
+                # print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
 
 
             time.sleep(0.05)
 
 
-        print("No collision detected along trajectory. Adjust joint angles to force collision.")
+        print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
         return False
 
 
+        # traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_original, steps).q
+        # print("Resetting robot to original position...")
+        # for q in traj_back:
+        #     self.meat_robot_ctrl.robot.q = q
+        #     self.env.draw(self.meat_robot_ctrl.robot)
+        #     time.sleep(0.05)
+
+
+        # print("✅ Robot reset complete.")
