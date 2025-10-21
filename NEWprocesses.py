@@ -36,7 +36,7 @@ class processes:
         # placed_meshes = bread_meshes + [tray_mesh]
         # start_pos, end_pos = SE3(3, 0.6, 1).t, SE3(2.45, 0.8, 1).t
 
-        # self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
+        self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
         self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
 
         
@@ -93,6 +93,24 @@ class processes:
             if collisions:
                 print(f"⚠️ Collision detected! Movement stopped.")
                 self.meat_robot_ctrl.set_estop(True)  # stop robot immediately
+                
+                print("Resetting robot to original position...")
+                # Use current q and original q for reverse trajectory
+                q_current = self.meat_robot_ctrl.robot.q.copy()
+                traj_back = rtb.jtraj(q_current, q_original, steps).q
+                
+                # Move robot back gradually before releasing estop
+                for q in traj_back:
+                    self.meat_robot_ctrl.robot.q = q
+                    if hasattr(self.env, "step"):
+                        self.env.step()
+                    else:
+                        self.meat_robot_ctrl.robot.plot(q, block=False)
+                    time.sleep(0.05)
+                
+                # Now release estop after completion of reset motion
+                self.meat_robot_ctrl.set_estop(False)
+                print("Robot reset complete.")
                 return True
 
             # Update visualization

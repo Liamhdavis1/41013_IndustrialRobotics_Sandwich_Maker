@@ -131,7 +131,7 @@ class RobotEnvironment:
         for ingr in ["bread_bottom", ]:
             bread_piles[ingr] = []
             for i in range(5):
-                pose = SE3(1.6 + i * 0.15, -0.3 , 1.02) * SE3.Trans(ENV_OFFSET) 
+                pose = SE3(1.6 + i * 0.15, -0.2 , 1.02) * SE3.Trans(ENV_OFFSET) 
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
 
