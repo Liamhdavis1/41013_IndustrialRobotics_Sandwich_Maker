@@ -28,13 +28,17 @@ class processes:
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
         tray_mesh = spawn_ingredient(self.env, "tray", SE3(1.3, 0.45, 1) * SE3(*ENV_OFFSET))
-
+        
+        print (self.UR3_robot.q)
         bread = self.env_instance.spawn_bread(self.env)
         bread_locs, bread_meshes = self.env_instance.collect_bread_locations_and_meshes(bread)
+        print (self.UR3_robot.q)
         self.UR3_robot.bread_movement(bread_locs, [3, 0.8, 1.0], bread_meshes)
+        print (self.UR3_robot.q)
 
         placed_meshes = bread_meshes + [tray_mesh]
         start_pos, end_pos = SE3(3, 0.6, 1).t, SE3(2.45, 0.8, 1).t
+        print (self.UR3_robot.q)
 
         self.meat_robot_ctrl.rmrc_vertical_movement(
             self.meat_robot_ctrl.robot,
@@ -72,7 +76,7 @@ class processes:
         steps = 50
         q0 = np.zeros(6)
         q_pick = self.meat_robot_ctrl.robot.ikine_LM(SE3(2.45, 1, 0.7), q0=q0).q
-        q_original = self.meat_robot_ctrl.robot.q.copy()
+        self.q_original = self.meat_robot_ctrl.robot.q.copy()
 
         # Create trajectory
         traj = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_pick, steps).q
@@ -101,12 +105,14 @@ class processes:
 
         print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
         return False
+    
+    def reset_robot(self):
+        steps = 50
+        traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, self.q_original, steps).q
+        print("Resetting robot to original position...")
+        for q in traj_back:
+            self.meat_robot_ctrl.robot.q = q
+            self.env.draw(self.meat_robot_ctrl.robot)
+            time.sleep(0.05)
 
-        # traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_original, steps).q
-        # print("Resetting robot to original position...")
-        # for q in traj_back:
-        #     self.meat_robot_ctrl.robot.q = q
-        #     self.env.draw(self.meat_robot_ctrl.robot)
-        #     time.sleep(0.05)
-
-        # print("✅ Robot reset complete.")
+        print("✅ Robot reset complete.")
