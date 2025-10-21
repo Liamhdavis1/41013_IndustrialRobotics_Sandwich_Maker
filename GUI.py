@@ -5,7 +5,7 @@ import threading
 import serial
 # from IngredientsLiam import RobotEnvironment
 from NEWspawnEnv import RobotEnvironment
-from NEWprocesses import processes
+from NEWprocesses_micah import processes
 import matplotlib.pyplot as plt
 from CollisionDetectionInEnvronment import CollsionDetection
 from ir_support import EllipsoidRobot
@@ -34,8 +34,8 @@ class IngredientSelector(tk.Tk):
         self.process_thread = None
 
         # Initialize serial port and start reader thread
-        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
-        # threading.Thread(target=self.read_from_serial, daemon=True).start()
+        self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        threading.Thread(target=self.read_from_serial, daemon=True).start()
 
         plt.close('all')
 
