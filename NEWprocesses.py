@@ -28,31 +28,32 @@ class processes:
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
         tray_mesh = spawn_ingredient(self.env, "tray", SE3(1.3, 0.45, 1) * SE3(*ENV_OFFSET))
-        
-        print (self.UR3_robot.q)
+
         bread = self.env_instance.spawn_bread(self.env)
         bread_locs, bread_meshes = self.env_instance.collect_bread_locations_and_meshes(bread)
-        print (self.UR3_robot.q)
         self.UR3_robot.bread_movement(bread_locs, [3, 0.8, 1.0], bread_meshes)
-        print (self.UR3_robot.q)
 
         placed_meshes = bread_meshes + [tray_mesh]
         start_pos, end_pos = SE3(3, 0.6, 1).t, SE3(2.45, 0.8, 1).t
-        print (self.UR3_robot.q)
 
-        self.meat_robot_ctrl.rmrc_vertical_movement(
-            self.meat_robot_ctrl.robot,
-            self.env, start_pos, end_pos,
-            tool_orientation=[pi, 0, 0],
-            mesh_list=placed_meshes
-        )
+        # self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
+        self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
+
+        
+
+        # self.meat_robot_ctrl.rmrc_vertical_movement(
+        #     self.meat_robot_ctrl.robot,
+        #     self.env, start_pos, end_pos,
+        #     tool_orientation=[pi, 0, 0],
+        #     mesh_list=bread_meshes + tray_meshes
+        # )
 
         self.meat_robot_ctrl.process_food_order(meat_locs, [2.45, 1, 1], meat_meshes)
         self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
             self.env,
             SE3(2.45, 1, 1).t, SE3(1.75, 0.88, 1).t,
             tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + bread_meshes + [tray_mesh])
+            mesh_list=meat_meshes + bread_meshes + tray_meshes)
 
         print("Processing veggies with IRB...")
         self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, 1], veggie_meshes)
@@ -60,7 +61,7 @@ class processes:
             self.env,
             SE3(1.5, 1.0, 1).t, SE3(1.3, 1.0, 1).t,
             tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + veggie_meshes + bread_meshes + [tray_mesh])
+            mesh_list=meat_meshes + veggie_meshes + bread_meshes + tray_meshes)
 
         print("Processing with Cobot320...")
         self.cobot_ctrl.other_ik_solver(
