@@ -27,7 +27,7 @@ class processes:
 
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes):
         self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
-        # self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
+        self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
 
         
 
