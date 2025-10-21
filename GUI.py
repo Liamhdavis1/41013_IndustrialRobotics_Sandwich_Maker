@@ -34,8 +34,8 @@ class IngredientSelector(tk.Tk):
         self.process_thread = None
 
         # Initialize serial port and start reader thread
-        self.serial_port = serial.Serial('COM4', 9600, timeout=1)
-        threading.Thread(target=self.read_from_serial, daemon=True).start()
+        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        # threading.Thread(target=self.read_from_serial, daemon=True).start()
 
         plt.close('all')
 
@@ -77,7 +77,9 @@ class IngredientSelector(tk.Tk):
 
         self.process_thread = threading.Thread(
             target=self.process_handler.process_sandwich_individually,
-            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes),
+            # args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes),
+            args = (meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes),
+
             daemon=True)
         self.process_thread.start()
 

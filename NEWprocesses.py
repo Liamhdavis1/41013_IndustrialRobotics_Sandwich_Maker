@@ -21,12 +21,12 @@ class processes:
 
 
         self.ellipsoid_meat = EllipsoidRobot(self.meat_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
-        # self.ellipsoid_veggie = EllipsoidRobot(self.veggie_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
-        # self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
-        # self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
+        self.ellipsoid_veggie = EllipsoidRobot(self.veggie_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
+        self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
+        self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
 
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes):
-        self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
+        # self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
         # self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
 
         
@@ -38,29 +38,35 @@ class processes:
         #     mesh_list=bread_meshes + tray_meshes
         # )
 
-        self.meat_robot_ctrl.process_food_order(meat_locs, [2.45, 1, 1], meat_meshes)
-        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
-            self.env,
-            SE3(2.45, 1, 1).t, SE3(1.75, 0.88, 1).t,
-            tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + bread_meshes + tray_meshes)
+        # self.meat_robot_ctrl.process_food_order(meat_locs, [2.45, 1, 1], meat_meshes)
+        # self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
+        #     self.env,
+        #     SE3(2.45, 1, 1).t, SE3(1.75, 0.88, 1).t,
+        #     tool_orientation=[pi,0,0],
+        #     mesh_list=meat_meshes + bread_meshes + tray_meshes)
 
-        print("Processing veggies with IRB...")
-        self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, 1], veggie_meshes)
-        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
-            self.env,
-            SE3(1.5, 1.0, 1).t, SE3(1.3, 1.0, 1).t,
-            tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + veggie_meshes + bread_meshes + tray_meshes)
+        # print("Processing veggies with IRB...")
+        # self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, 1], veggie_meshes)
+        # self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
+        #     self.env,
+        #     SE3(1.5, 1.0, 1).t, SE3(1.3, 1.0, 1).t,
+        #     tool_orientation=[pi,0,0],
+        #     mesh_list=meat_meshes + veggie_meshes + bread_meshes + tray_meshes)
 
         print("Processing with Cobot320...")
-        self.cobot_ctrl.other_ik_solver(
-            pick_pose=SE3(1.3, 1.0, 1.1),
-            place_pose=SE3(0.9, 0.55, 1.1),
-            mesh=meat_meshes + veggie_meshes + bread_meshes + tray_meshes,
-            gripper_down_orientation_pick=None,
-            gripper_down_orientation_place=None
-        )
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
+            self.env,
+            SE3(1.3, 1.0, 1).t, SE3(1.0, 1.0, 1).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=meat_meshes + veggie_meshes + bread_meshes + tray_meshes)
+        
+        # self.cobot_ctrl.other_ik_solver(
+        #     pick_pose=SE3(1.3, 1.0, 1.1),
+        #     place_pose=SE3(0.9, 0.55, 1.1),
+        #     mesh=meat_meshes + veggie_meshes + bread_meshes + tray_meshes,
+        #     gripper_down_orientation_pick=None,
+        #     gripper_down_orientation_place=None
+        # )
 
 
     def force_collision(self):
