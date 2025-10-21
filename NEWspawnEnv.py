@@ -83,8 +83,12 @@ class RobotEnvironment:
         self.spawn_items(self.env)
         self.UR3_robot, self.XArm_robot, self.irb_robot, self.Cobot = self.setup_robots(self.env)
         self.piles = self.spawn_all_piles(self.env)
-        self.bread_piles = self.spawn_bread_bottom(self.env)
-        self.bread_piles = self.spawn_bread_top(self.env)
+        self.bread_piles = {}
+        self.bread_piles.update(self.spawn_bread_bottom(self.env))
+        self.bread_piles.update(self.spawn_bread_top(self.env))
+
+        # self.bread_piles = self.spawn_bread_bottom(self.env)
+        # self.bread_piles = self.spawn_bread_top(self.env)
         self.tray_pile = self.spawn_tray(self.env)
         self.env.set_camera_pose([3, -3, 2], [1, 0.5, 0])
         self.env.step()
@@ -131,7 +135,7 @@ class RobotEnvironment:
         for ingr in ["bread_bottom", ]:
             bread_piles[ingr] = []
             for i in range(5):
-                pose = SE3(2, -0.3 + i * 0.15, 1.02) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+                pose = SE3(2, -0.2 + i * 0.15, 1.02) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
 
