@@ -27,7 +27,7 @@ class processes:
 
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes):
         self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
-        self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
+        # self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
 
         
 
@@ -57,7 +57,7 @@ class processes:
         self.cobot_ctrl.other_ik_solver(
             pick_pose=SE3(1.3, 1.0, 1.1),
             place_pose=SE3(0.9, 0.55, 1.1),
-            mesh=meat_meshes + veggie_meshes + bread_meshes + [tray_mesh],
+            mesh=meat_meshes + veggie_meshes + bread_meshes + tray_meshes,
             gripper_down_orientation_pick=None,
             gripper_down_orientation_place=None
         )
