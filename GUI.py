@@ -34,8 +34,8 @@ class IngredientSelector(tk.Tk):
         self.process_thread = None
 
         # Initialize serial port and start reader thread
-        self.serial_port = serial.Serial('COM4', 9600, timeout=1)
-        threading.Thread(target=self.read_from_serial, daemon=True).start()
+        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        # threading.Thread(target=self.read_from_serial, daemon=True).start()
 
         plt.close('all')
 
@@ -69,7 +69,9 @@ class IngredientSelector(tk.Tk):
         tray_selection = ["tray"]
 
         tray_locs, tray_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.tray_pile, tray_selection)
-        bread_locs, bread_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.bread_piles, bread_selection)
+        bread_bottom_locs, bread_bottom_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.bread_piles, ["bread_bottom"])
+        bread_top_locs, bread_top_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.bread_piles, ["bread_top"])
+
         meat_locs, meat_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, meat_selection)
         veggie_locs, veggie_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, veggie_selection)
 
@@ -77,7 +79,8 @@ class IngredientSelector(tk.Tk):
 
         self.process_thread = threading.Thread(
             target=self.process_handler.process_sandwich_individually,
-            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes),
+            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_bottom_locs, bread_bottom_meshes,
+                                bread_top_locs, bread_top_meshes, tray_locs, tray_meshes),
             daemon=True)
         self.process_thread.start()
 

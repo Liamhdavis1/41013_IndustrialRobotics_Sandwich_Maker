@@ -25,19 +25,23 @@ class processes:
         # self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
         # self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
 
-    def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
+    def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes,
+                                bread_bottom_locs, bread_bottom_meshes,
+                                bread_top_locs, bread_top_meshes,
+                                tray_locs, tray_meshes):
         print("Processing meats with XArm6...")
         offset = 0.28
-        tray_mesh = spawn_ingredient(self.env, "tray", SE3(2.5, 1, 1))
+  
+        print("Tray locs:", tray_locs)
+        print("Tray meshes:", tray_meshes)
 
-        bread = self.env_instance.spawn_bread(self.env)
-        bread_locs, bread_meshes = self.env_instance.collect_bread_locations_and_meshes(bread)
-        
-        
-        self.UR3_robot.bread_movement(bread_locs, [2.5, 1, 1], bread_meshes)
+        print("Bread bottom locs:", bread_bottom_locs)
+        print("Bread bottom meshes:", bread_bottom_meshes)
 
-        placed_meshes = bread_meshes + [tray_mesh]
-        
+        self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
+        self.UR3_robot.process_food_order(bread_bottom_locs, [3, 1, 1], bread_bottom_meshes)
+
+
         # Process food order
         self.meat_robot_ctrl.process_food_order(meat_locs, [2.5, 1, 1], meat_meshes)
         # Move to position before sliding
@@ -53,7 +57,7 @@ class processes:
             self.env,
             SE3(2.45, 1, 1).t, SE3(1.75, 1, 1).t,
             tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + bread_meshes + [tray_mesh])
+            mesh_list=meat_meshes + bread_bottom_meshes + tray_meshes)
         
         # Move to position after sliding
         success = self.meat_robot_ctrl.move_to_start_position(
@@ -82,7 +86,7 @@ class processes:
             self.env,
             SE3(1.5, 1.0, 1).t, SE3(1.3, 1.0, 1).t,
             tool_orientation=[pi,0,0],
-            mesh_list=meat_meshes + veggie_meshes + bread_meshes + [tray_mesh])
+            mesh_list=meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes)
 
         # print("Processing with Cobot320...")
         # self.cobot_ctrl.other_ik_solver(
