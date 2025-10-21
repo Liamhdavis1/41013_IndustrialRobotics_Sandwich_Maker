@@ -7,7 +7,7 @@ from Micahs_robot.abb_irb_120 import abb_irb_120
 from Lilys_robot.XArm6 import XArm6
 from ir_support.robots import UR3
 from Liams_robot.Cobot320 import Cobot320
-from FoodOrderRobotv2 import FoodOrderRobotv1
+from FoodOrderRobotv3 import FoodOrderRobotv1
 import os
 import trimesh
 from NEWcollisionDetection import CollsionDetection  # your collision utils
@@ -107,7 +107,7 @@ class RobotEnvironment:
         irb_robot.base = SE3(0, 0.1, 1) * SE3.Trans(ENV_OFFSET)
         Cobot.base = SE3(-0.95, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         XArm_robot.base = SE3(0.9, 0.15, 1) * SE3.Trans(ENV_OFFSET)
-        UR3_robot.base = SE3(1.75, 0.2, 1) * SE3.Trans(ENV_OFFSET)
+        UR3_robot.base = SE3(1.6, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         for r in [XArm_robot, irb_robot, UR3_robot, Cobot]:
             r.add_to_env(env)
         return UR3_robot, XArm_robot, irb_robot, Cobot
@@ -134,8 +134,8 @@ class RobotEnvironment:
          # Fixed height without storage_z list
         for ingr in ["bread_bottom", ]:
             bread_piles[ingr] = []
-            for i in range(5):
-                pose = SE3(2, -0.2 + i * 0.15, 1.02) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+            for i in range(3):
+                pose = SE3(1.7 + i * 0.12, -0.2 , 1 ) * SE3.Trans(ENV_OFFSET) 
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
 
@@ -155,7 +155,7 @@ class RobotEnvironment:
         for ingr in ["tray", ]:
             tray_pile[ingr] = []
             for i in range(5):
-                pose = SE3(2, 0.45, 1.1 - i * 0.02) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+                pose = SE3(2, 0.45, 1.1 - i * 0.02) * SE3.Trans(ENV_OFFSET) 
                 tray_pile[ingr].append(spawn_ingredient(env, ingr, pose))
         return tray_pile
 

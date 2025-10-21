@@ -2,18 +2,22 @@
 # Simplified food order processing system for ABB IRB120
 # Combines IK+jtraj for large movements and RMRC for precise pick/place operations
 
+
 import numpy as np
 from scipy import linalg
 import time
 from roboticstoolbox import jtraj
+
 
 import swift
 from spatialmath.base import transl, rpy2tr, tr2rpy
 from spatialmath import SE3
 from math import pi
 
+
 # Import the ABB IRB120 robot model
 from Micahs_robot.abb_irb_120 import abb_irb_120
+
 
 class FoodOrderRobotv1:
     """
@@ -34,67 +38,11 @@ class FoodOrderRobotv1:
         self.hover_height = 0.2                   # Height above objects (0.2m)
         self.convergence_tolerance = 1e-6         # IK tolerance
 
+
         # Define grip offset for mesh attachment (adjust as needed)
         self.grip_offset = SE3.Trans(0, 0, 0) * SE3.Rx(np.pi)  # Tool pointing down
         self.estop = False
 
-                # ========== NEW: Global stacking height tracking ==========
-        self.global_stack_heights = {}  # Dict to track stack heights by station location
-        self.ingredient_heights = {
-            'tray': 0.02,
-            'bread_bottom': 0.03,
-            'meat': 0.02,
-            'veggie': 0.01,
-            'bread_top': 0.03
-        }
-        self.last_ingredient_type = {}  # Track last ingredient type per station
-
-    def get_station_key(self, station_location):
-        """Convert station location to a hashable key"""
-        return tuple(np.round(station_location, 2))
-    
-    def get_current_stack_height(self, station_location, ingredient_type):
-        """Get current stacking height for a station"""
-        station_key = self.get_station_key(station_location)
-        
-        if station_key not in self.global_stack_heights:
-            # First ingredient at this station
-            self.global_stack_heights[station_key] = station_location[2]
-            self.last_ingredient_type[station_key] = None
-            return station_location[2]
-        
-        current_height = self.global_stack_heights[station_key]
-        last_type = self.last_ingredient_type[station_key]
-        
-        # Calculate height increment based on previous ingredient
-        if last_type == 'bread_bottom':
-            height_increment = 0.3  # Special case for bread base
-        else:
-            height_increment = 0.1  # Normal stacking
-            
-        new_height = current_height + height_increment
-        
-        print(f"  Stack height: {current_height:.3f} -> {new_height:.3f} (last: {last_type}, current: {ingredient_type})")
-        
-        return new_height
-    
-    def update_stack_height(self, station_location, ingredient_type):
-        """Update the global stack height after placing an ingredient"""
-        station_key = self.get_station_key(station_location)
-        
-        if ingredient_type in self.ingredient_heights:
-            ingredient_height = self.ingredient_heights[ingredient_type]
-        else:
-            ingredient_height = 0.02  # default
-            
-        # Get the placement height
-        placement_height = self.get_current_stack_height(station_location, ingredient_type)
-        
-        # Update to top of this ingredient
-        self.global_stack_heights[station_key] = placement_height + ingredient_height
-        self.last_ingredient_type[station_key] = ingredient_type
-        
-        print(f"  Updated stack height to {self.global_stack_heights[station_key]:.3f} after placing {ingredient_type}")
 
     # ========== E-Stop ==========
     def set_estop(self, status: bool):
@@ -105,6 +53,7 @@ class FoodOrderRobotv1:
             else:
                 print("Emergency Stop released! Resuming robot motions.")
 
+
     def wait_if_estop(self):
         # Wait (blocking) while estop is active
         while self.estop:
@@ -114,8 +63,10 @@ class FoodOrderRobotv1:
     def enforce_joint_limits(self, q, qlim):
         return np.clip(q, qlim[0, :], qlim[1, :])
 
+
     def pose_error_mm(self, T_actual, T_target):
         return float(np.linalg.norm(T_actual.t - T_target.t) * 1000.0)
+
 
     def generate_initial_guesses(self, robot, q_current):
         guesses = []
@@ -127,6 +78,7 @@ class FoodOrderRobotv1:
         if hasattr(robot, 'qr'):
             guesses.append(robot.qr)
         return guesses
+
 
     def solve_ik_robust(self, robot, target_pose, q_current):
         """
@@ -147,6 +99,7 @@ class FoodOrderRobotv1:
             if error <= 5.0:
                 return q_solution, True, error
 
+
         # Try multiple guesses
         guesses = self.generate_initial_guesses(robot, q_current)
         for i, q0 in enumerate(guesses):
@@ -161,7 +114,9 @@ class FoodOrderRobotv1:
                 if error <= 5.0:
                     return q_solution, True, error
 
+
         return q_current, False, float('inf')
+
 
     def execute_trajectory(self, robot, env, q_start, q_end, steps=50, mesh=None, mesh_list=None, grip_offset=None):
         self.wait_if_estop()
@@ -180,6 +135,7 @@ class FoodOrderRobotv1:
                     if m is not None:
                         m.T = T_ee * grip_offset
             env.step(0.01)
+
 
     def move_to_start_position(self, robot, env, target_pos, tool_orientation=[pi, 0, 0], mesh_list=None):
         """
@@ -221,10 +177,12 @@ class FoodOrderRobotv1:
         
         return True
 
+
     # ========== RMRC Function for Precise Pick/Place ==========
     def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation,
-                           mesh=None, mesh_list=None, grip_offset=None,
-                           mesh_offset_along_x=-0.28, mesh_z_offsets=None):
+                          mesh=None, mesh_list=None, grip_offset=None,
+                          mesh_offset_along_x=-0.28, mesh_z_offsets=None):
+
 
         """
         Use RMRC for precise vertical movement (pick or place)
@@ -236,18 +194,20 @@ class FoodOrderRobotv1:
         if grip_offset is None:
             grip_offset = self.grip_offset
 
+
         if mesh_list is not None and mesh_z_offsets is None:
             mesh_z_offsets = [0] * len(mesh_list)
+
 
         print(f"    RMRC: {start_pos} → {end_pos}")
         
         # Create trajectory arrays
         x = np.linspace(start_pos, end_pos, self.rmrc_steps).T
 
+
         Rd = rpy2tr(*tool_orientation)[:3, :3]
 
-        # theta = np.tile(tool_orientation, (self.rmrc_steps, 1)).T
-        
+
         # Allocate arrays
         q_matrix = np.zeros((self.rmrc_steps, 6))
         q_matrix[0, :] = robot.q.copy()  # Start from current position
@@ -259,10 +219,6 @@ class FoodOrderRobotv1:
             delta_x = x[:, i+1] - T_now[:3, 3]
             
             # Orientation calculations
-            # Rd = rpy2tr(*theta[:, i+1])[:3, :3]
-            # Ra = T_now[:3, :3]
-            # S = ((Rd - Ra) / self.delta_t) @ Ra.T
-
             Ra = T_now[:3, :3]
             S = ((Rd - Ra) / self.delta_t) @ Ra.T
 
@@ -277,6 +233,7 @@ class FoodOrderRobotv1:
             det_val = linalg.det(J @ J.T)
             det_val = np.clip(det_val, 0, None)  # Avoid negative inside sqrt
             m = np.sqrt(det_val)
+
 
             lambda_min = 0.001
             if m < self.epsilon:
@@ -299,6 +256,7 @@ class FoodOrderRobotv1:
                 T_ee = robot.fkine(q_next)
                 mesh.T = T_ee * grip_offset
 
+
             if mesh_list is not None:
                 T_ee = robot.fkine(q_next)
                 for m, z_off in zip(mesh_list, mesh_z_offsets):
@@ -306,9 +264,11 @@ class FoodOrderRobotv1:
                         m.T = T_ee * grip_offset * SE3.Trans(mesh_offset_along_x, 0, z_off)
 
 
+
             env.step(self.delta_t)
             
         print(f"    RMRC completed. Final position: {robot.fkine(robot.q).t.round(3)}")
+
 
     def lower_to_height(self, robot, env, start_pos, target_height, tool_orientation):
         lowered_pos = start_pos.copy()
@@ -316,21 +276,26 @@ class FoodOrderRobotv1:
         if start_pos[2] > target_height:
             self.rmrc_vertical_movement(robot, env, start_pos, lowered_pos, tool_orientation)
 
+
     def other_ik_solver(self, pick_pose: SE3, place_pose: SE3, mesh=None, gripper_down_orientation_pick=None, gripper_down_orientation_place=None):
         self.wait_if_estop()
         # Gripper orientation (tool pointing down)
         if gripper_down_orientation_pick is None:
             gripper_down_orientation_pick = SE3.Rz(np.pi)  # Rotation about X axis by pi
 
+
         if gripper_down_orientation_place is None:
             gripper_down_orientation_place = SE3.Rz(np.pi)
+
 
         safe_pose_above_pick = pick_pose * gripper_down_orientation_pick
         safe_pose_above_place = place_pose * gripper_down_orientation_place
 
+
         # Poses above the brick for picking and placing, factor in brick height
         pick_pose_above_brick = pick_pose * gripper_down_orientation_pick
         place_pose_above_brick = place_pose * gripper_down_orientation_place
+
 
         #Initial guess for IK based on pick and place positions, elbow bent up, away from floor
         q0_pick  = np.array([0, 0, pi/2, 0, 0, 0])
@@ -343,11 +308,13 @@ class FoodOrderRobotv1:
         q_safe_pick = np.clip(sol_safe_pick.q, self.robot.qlim[0], self.robot.qlim[1])
         q_safe_place = np.clip(sol_safe_place.q, self.robot.qlim[0], self.robot.qlim[1])
 
+
         # Repeat above for pick and place poses
         sol_pick = self.robot.ikine_LM(pick_pose_above_brick, q0=q_safe_pick)
         sol_place = self.robot.ikine_LM(place_pose_above_brick, q0=q_safe_place)
         q_pick = np.clip(sol_pick.q, self.robot.qlim[0], self.robot.qlim[1])
         q_place = np.clip(sol_place.q, self.robot.qlim[0], self.robot.qlim[1])
+
 
         # Define trajectory segments between key poses
         trajectory_pairs = [
@@ -358,6 +325,7 @@ class FoodOrderRobotv1:
             (q_safe_place, q_place),      # safe place hover to place pose
             (q_place, q_safe_place)       # place pose back to safe place hover
         ]
+
 
         # Generate joint trajectories for each segment
         # all_trajectories = []
@@ -370,6 +338,7 @@ class FoodOrderRobotv1:
                 self.robot.q = q_clipped
                 ee_pose = self.robot.fkine(self.robot.q)
 
+
                 if idx in [2, 3, 4] and mesh is not None:
                     # If it's a list of meshes, update each
                     if isinstance(mesh, list):
@@ -380,20 +349,25 @@ class FoodOrderRobotv1:
                         # Single mesh case
                         mesh.T = ee_pose
 
+
                 self.env.step(0.01)
 
+
             # all_trajectories.append(traj)
+
 
         # return all_trajectories
 
 
+
     # ========== Main Food Order Processing Function ==========
-    def process_food_order(self, food_locations, station_location, mesh_list = None, tool_orientation=[pi, 0, 0], ingredient_type='default'):
+    def process_food_order(self, food_locations, station_location, mesh_list = None, tool_orientation=[pi, 0, 0], initial_z=None):
         """
         Main function to process food order by iterating through ingredient locations
         
         food_locations: List of [x, y, z] coordinates for each food item
         station_location: [x, y, z] coordinate for the assembly station
+        initial_z: Optional initial stack height
         """
         print("=== Food Order Processing System ===")
         
@@ -401,16 +375,24 @@ class FoodOrderRobotv1:
         robot = self.robot
         env = self.env
 
+
         # Initialize current stack height at assembly station base height
-        current_z = station_location[2]
+        if initial_z is None:
+            current_z = station_location[2]
+        else:
+            current_z = initial_z
+
 
         # Tool orientation (pointing downward for picking)
         # tool_orientation = [pi, 0, 0]  # Roll=π, Pitch=0, Yaw=0
 
+
         print(f"Processing order with {len(food_locations)} ingredients...")
         print(f"Station location: {station_location}")
 
+
         placed_meshes = []
+
 
         # Process each food item in the order list
         for i, food_pos in enumerate(food_locations):
@@ -419,20 +401,24 @@ class FoodOrderRobotv1:
                 mesh = mesh_list[i]
                 print(f"  Attaching mesh {i}: {type(mesh)}")
 
+
             # Calculate hover position
             hover_above_food = [food_pos[0], food_pos[1], food_pos[2] + self.hover_height]
             hover_pose = SE3(transl(hover_above_food) @ rpy2tr(*tool_orientation))
+
 
             q_hover, success, error = self.solve_ik_robust(robot, hover_pose, robot.q)
             if not success:
                 print(f"  Failed to reach hover position for ingredient {i+1}")
                 continue
 
+
             print(f"  Moving to hover above food (IK+jtraj)...")
             self.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
             
             print(f"  Picking up ingredient {i+1} (RMRC down)...")
             self.rmrc_vertical_movement(robot, env, hover_above_food, food_pos, tool_orientation, mesh=None)
+
 
             print(f"  Attaching mesh {i} to end effector...")
             attached_mesh = mesh
@@ -448,8 +434,10 @@ class FoodOrderRobotv1:
                 current_z  # Use updated stack height
             ]
 
+
             # Hover above the current stack height
             hover_above_station = [current_station_pos[0], current_station_pos[1], current_station_pos[2] + self.hover_height]
+
 
             station_hover_pose = SE3(transl(hover_above_station) @ rpy2tr(*tool_orientation))
             q_station, success, error = self.solve_ik_robust(robot, station_hover_pose, robot.q)
@@ -457,15 +445,19 @@ class FoodOrderRobotv1:
                 print(f"  Failed to reach station hover position for ingredient {i + 1}")
                 continue
 
+
             print(f"  Moving to hover above station (IK+jtraj)...")
             self.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh)
+
 
             print(f"  Placing ingredient {i+1} at station (RMRC down)...")
             place_pos = current_station_pos
             self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh)
 
+
             # print(f"  Retracting from station (RMRC up)...")
             # self.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation)
+
 
             # Append the attached mesh before detaching it
             if attached_mesh is not None:
@@ -473,9 +465,11 @@ class FoodOrderRobotv1:
             # Detach mesh by stopping update (mesh left at place location)
             attached_mesh = None
 
+
             # Increment current stack height by the ingredient height for next ingredient
             ingredient_height = 0.01  # fixed height for all ingredients
             current_z += ingredient_height
+
 
             print(f"  ✓ Ingredient {i+1} completed! Stacking next ingredient at height {current_z:.3f} m")
         
@@ -483,18 +477,24 @@ class FoodOrderRobotv1:
         placed_meshes = [mesh for mesh in placed_meshes if mesh is not None]
         print(f"Found {len(placed_meshes)} valid placed meshes to drag")
 
+        return current_z
+
+
     def bread_movement(self, bread_locations, station_location, mesh_list = None):
         robot = self.robot
         env = self.env
         
         tool_orientation = [0, -pi/2, pi]  
 
+
         print(f"Processing order with {len(bread_locations)} ingredients...")
         print(f"Station location: {bread_locations}")
         placed_meshes = []
 
+
         hover_height = 0.2
         ingredient_spacing = 0.2  # sideways stacking increment
+
 
         # Initialize current station position for stacking
         current_station_pos = [
@@ -503,12 +503,14 @@ class FoodOrderRobotv1:
             station_location[2]
         ]
 
+
         # Process each food item in the order list
         for i, bread_pos in enumerate(bread_locations):
             mesh = None
             if mesh_list is not None and i < len(mesh_list):
                 mesh = mesh_list[i]
                 print(f"  Attaching mesh {i}: {type(mesh)}")
+
 
             # Calculate hover position above food
             hover_above_food = [bread_pos[0] - hover_height, bread_pos[1], bread_pos[2]]
@@ -520,10 +522,12 @@ class FoodOrderRobotv1:
             self.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
             self.rmrc_vertical_movement(robot, env, hover_above_food, bread_pos, tool_orientation, mesh=None)
 
+
             # Attach and lift the ingredient
             attached_mesh = mesh
             self.rmrc_vertical_movement(robot, env, bread_pos, hover_above_food, tool_orientation, mesh=attached_mesh,
                                         grip_offset=SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+
 
             # Hover above current station position
             hover_above_station = [current_station_pos[0], current_station_pos[1], current_station_pos[2] + hover_height]
@@ -536,13 +540,16 @@ class FoodOrderRobotv1:
             self.execute_trajectory(robot, env, robot.q.copy(), q_station, mesh=attached_mesh,
                                     grip_offset=SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
+
             # Place ingredient at current_station_pos
             place_pos = current_station_pos
             self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh,
                                         grip_offset=SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
 
+
             # Increment y-coordinate for next slice
             current_station_pos[1] += ingredient_spacing
+
 
             print(f"  Retracting from station (RMRC up)...")
             self.rmrc_vertical_movement(robot, env, place_pos, hover_above_station, tool_orientation,
@@ -550,7 +557,9 @@ class FoodOrderRobotv1:
             tool_orientation = [0, -pi/2, pi]
 
 
+
         # After placing all ingredients in the loop is done
+
 
         # 1. Get current EE pose and compute target offset by +0.1m in X (IK + jtraj)
         # T_current = robot.fkine(robot.q)
@@ -563,10 +572,13 @@ class FoodOrderRobotv1:
         # else:
         #     print("Failed to reach workspace offset (+0.1m X)")
 
+
         # === Insert your pushing move block here ===
+
 
         # Reference base height
     #     base_height = station_location[2]
+
 
     #     # Compute vertical offsets for each mesh
     #     mesh_z_offsets = []
@@ -576,10 +588,13 @@ class FoodOrderRobotv1:
         
     #     push_height = 1  # a little above surface
 
+
     #     T_current = robot.fkine(robot.q)
     #     current_pos = T_current.t
 
+
     #    # Slide back by 0.3 m total from EE start point
+
 
     #     # --- new forward offset step before sliding ---
     #     approach_pos = current_pos.copy()
@@ -588,6 +603,7 @@ class FoodOrderRobotv1:
     #     self.rmrc_vertical_movement(robot, env, current_pos, approach_pos, tool_orientation)
     #     current_pos = approach_pos    
 
+
     #     if current_pos[2] > push_height:
     #         print("Lowering EE before pushing food...")
     #         lower_pos = current_pos.copy()
@@ -595,12 +611,15 @@ class FoodOrderRobotv1:
     #         self.rmrc_vertical_movement(robot, env, current_pos, lower_pos, tool_orientation)
     #         current_pos = lower_pos                # now update EE position reference
 
+
     #     start_pos = current_pos.copy()
     #     start_pos[0] += 0.05
     #     end_pos = start_pos.copy()
     #     end_pos[0] -= 0.2
 
+
     #     print("Moving EE with offset to push food by sliding...")
+
 
     #     self.rmrc_vertical_movement(
     #         robot, env, start_pos, end_pos, tool_orientation,
@@ -609,13 +628,16 @@ class FoodOrderRobotv1:
     #         mesh_z_offsets=mesh_z_offsets
     #     )
 
+
         # print(f"=== Order Complete! Processed {len(food_locations)} ingredients ===")
         # input("Press Enter to close environment...")
         # env.close()
 
+
 def main():
     """Main function to run food order demo"""
     food_robot = FoodOrderRobotv1()
+
 
 if __name__ == "__main__":
     main()

@@ -9,6 +9,7 @@ import roboticstoolbox as rtb
 import time
 from IngredientsLiam import spawn_ingredient, ENV_OFFSET
 
+
 class processes:
     def __init__(self, env_instance: RobotEnvironment):
         self.env_instance = env_instance
@@ -20,35 +21,60 @@ class processes:
         self.bench_points = env_instance.bench_points
 
 
+
         self.ellipsoid_meat = EllipsoidRobot(self.meat_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
         # self.ellipsoid_veggie = EllipsoidRobot(self.veggie_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
         # self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
         # self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
+
 
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes,
                                 bread_bottom_locs, bread_bottom_meshes,
                                 bread_top_locs, bread_top_meshes,
                                 tray_locs, tray_meshes):
         print("Processing meats with XArm6...")
-        offset = 0.28
-  
-        print("Tray locs:", tray_locs)
-        print("Tray meshes:", tray_meshes)
+        offset = 0.24
 
-        print("Bread bottom locs:", bread_bottom_locs)
-        print("Bread bottom meshes:", bread_bottom_meshes)
-
-        self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
-        self.UR3_robot.process_food_order(bread_bottom_locs, [3, 1, 1], bread_bottom_meshes)
+        base_z = 1.0  # Assuming base z is 1.0
+        tray_final_z = self.UR3_robot.process_food_order(tray_locs, [2.7, 1, base_z], tray_meshes, initial_z=base_z)
+        bread_bottom_final_z = self.UR3_robot.process_food_order(bread_bottom_locs, [2.7, 1, base_z], bread_bottom_meshes, initial_z=tray_final_z)
 
 
-        # Process food order
-        self.meat_robot_ctrl.process_food_order(meat_locs, [2.5, 1, 1], meat_meshes)
+
+        # Move to position before sliding
+        success = self.UR3_robot.move_to_start_position(
+        self.UR3_robot.robot,
+        self.env,
+        target_pos=[2.7 + offset, 1, 1],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+        # Slide order
+        self.UR3_robot.rmrc_vertical_movement(self.UR3_robot.robot,
+            self.env,
+            SE3(2.7, 1, 1).t, SE3(2.45, 1, 1).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=bread_bottom_meshes + tray_meshes)  # Fixed typo: removed meat_meshes
+
+
+        # Move to position after sliding
+        success = self.UR3_robot.move_to_start_position(
+        self.UR3_robot.robot,
+        self.env,
+        target_pos=[2.7, 1, 1],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+
+
+        # Process food order for meats with special gap since previous is bread
+        meat_initial_z = bread_bottom_final_z + 0.2  # To make gap 0.3 instead of 0.1
+        meat_final_z = self.meat_robot_ctrl.process_food_order(meat_locs, [2.45, 1, base_z], meat_meshes, initial_z=meat_initial_z)
         # Move to position before sliding
         success = self.meat_robot_ctrl.move_to_start_position(
         self.meat_robot_ctrl.robot,
         self.env,
-        target_pos=[2.5 + offset, 1, 1],
+        target_pos=[2.45 + offset, 1, 1],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -68,10 +94,13 @@ class processes:
         mesh_list=None
     )
 
+
         print("Processing veggies with IRB...")
 
 
-        self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, 1], veggie_meshes)
+
+        veggie_initial_z = meat_final_z  # Normal gap
+        veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
         
         # Move to position before sliding
         success = self.veggie_robot_ctrl.move_to_start_position(
@@ -88,14 +117,11 @@ class processes:
             tool_orientation=[pi,0,0],
             mesh_list=meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes)
 
-        # print("Processing with Cobot320...")
-        # self.cobot_ctrl.other_ik_solver(
-        #     pick_pose=SE3(1.3, 1.0, 1.1),
-        #     place_pose=SE3(0.9, 0.55, 1.1),
-        #     mesh=meat_meshes + veggie_meshes + bread_meshes + [tray_mesh],
-        #     gripper_down_orientation_pick=None,
-        #     gripper_down_orientation_place=None
-        # )
+        # Assuming bread_top would be added similarly if needed
+        # For example:
+        # bread_top_initial_z = veggie_final_z  # Normal gap, since previous not bread
+        # bread_top_final_z = self.UR3_robot.process_food_order(bread_top_locs, [new_x, 1, base_z], bread_top_meshes, initial_z=bread_top_initial_z)
+        # Then slide with all meshes, etc.
 
 
     def force_collision(self):
@@ -104,14 +130,18 @@ class processes:
         q_pick = self.meat_robot_ctrl.robot.ikine_LM(SE3(2.45, 1, 0.7), q0=q0).q
         q_original = self.meat_robot_ctrl.robot.q.copy()
 
+
         # Create trajectory
         traj = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_pick, steps).q
 
+
         print("Moving robot to force collision...")
+
 
         for q in traj:
             self.meat_robot_ctrl.robot.q = q
             self.ellipsoid_meat.ellipsoid_for_robot_links(self.meat_robot_ctrl.robot.q)
+
 
         # Check for collision at this step
             collisions = CollsionDetection.detect_collisions(self.ellipsoid_meat, self.bench_points)
@@ -120,6 +150,7 @@ class processes:
                 self.meat_robot_ctrl.set_estop(True)  # stop robot immediately
                 return True
 
+
             # Update visualization
             if hasattr(self.env, "step"):
                 self.env.step()  # Swift or other env
@@ -127,10 +158,13 @@ class processes:
                 self.meat_robot_ctrl.robot.plot(q, block=False)
                 # print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
 
+
             time.sleep(0.05)
+
 
         print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
         return False
+
 
         # traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_original, steps).q
         # print("Resetting robot to original position...")
@@ -138,5 +172,6 @@ class processes:
         #     self.meat_robot_ctrl.robot.q = q
         #     self.env.draw(self.meat_robot_ctrl.robot)
         #     time.sleep(0.05)
+
 
         # print("✅ Robot reset complete.")
