@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from spatialmath import SE3
 from spatialmath.base import transl, rpy2tr, tr2rpy
 from math import pi
-from Micahs_robot.Robot_info.abb_irb_120 import abb_irb_120
+from Micahs_robot.abb_irb_120 import abb_irb_120
 
 
 def rmrc_vertical_trajectory():

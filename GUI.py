@@ -4,7 +4,7 @@ import os
 import threading
 # from IngredientsLiam import RobotEnvironment
 from NEWspawnEnv import RobotEnvironment
-from NEWprocesses import processes
+from NEWprocesses_micah import processes
 import matplotlib.pyplot as plt
 from CollisionDetectionInEnvronment import CollsionDetection
 from ir_support import EllipsoidRobot

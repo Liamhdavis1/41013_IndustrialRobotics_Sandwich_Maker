@@ -28,7 +28,7 @@ class FoodOrderRobotv1:
         self.delta_t = 0.02                       # Control frequency
         self.rmrc_steps = int(self.rmrc_time/self.delta_t)
         self.epsilon = 0.1                        # Manipulability threshold
-        self.W = np.diag([1, 1, 1, 0.1, 0.1, 0.1])  # Weighting matrix
+        self.W = np.diag([1, 1, 1, 1, 1, 1])  # Weighting matrix
         
         # Movement parameters
         self.hover_height = 0.2                   # Height above objects (0.2m)
@@ -123,6 +123,45 @@ class FoodOrderRobotv1:
                         m.T = T_ee * grip_offset
             env.step(0.01)
 
+    def move_to_start_position(self, robot, env, target_pos, tool_orientation=[pi, 0, 0], mesh_list=None):
+        """
+        Move robot to a starting position using IK + jtraj
+        
+        target_pos: [x, y, z] array or list - desired Cartesian position
+        tool_orientation: [roll, pitch, yaw] in radians
+        mesh_list: optional list of meshes to move with the robot
+        
+        Returns: True if successful, False otherwise
+        """
+        self.wait_if_estop()
+        
+        # Build target pose from position + orientation
+        target_pose = SE3(transl(target_pos) @ rpy2tr(*tool_orientation))
+        
+        # Solve IK
+        q_target, success, error = self.solve_ik_robust(robot, target_pose, robot.q)
+        
+        if not success:
+            print(f"  ❌ Failed to solve IK for start position {target_pos}")
+            print(f"     Error: {error:.2f} mm")
+            return False
+        
+        print(f"  ✓ Moving to start position {target_pos} (IK+jtraj)...")
+        print(f"     IK error: {error:.2f} mm")
+        
+        # Execute trajectory with optional mesh movement
+        self.execute_trajectory(
+            robot, env, 
+            robot.q.copy(), 
+            q_target, 
+            steps=50,
+            mesh_list=mesh_list
+        )
+        
+        final_pos = robot.fkine(robot.q).t
+        print(f"     Final position: {final_pos.round(3)}")
+        
+        return True
 
     # ========== RMRC Function for Precise Pick/Place ==========
     def rmrc_vertical_movement(self, robot, env, start_pos, end_pos, tool_orientation,
