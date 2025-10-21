@@ -34,8 +34,8 @@ class IngredientSelector(tk.Tk):
         self.process_thread = None
 
         # Initialize serial port and start reader thread
-        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
-        # threading.Thread(target=self.read_from_serial, daemon=True).start()
+        self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        threading.Thread(target=self.read_from_serial, daemon=True).start()
 
         plt.close('all')
 

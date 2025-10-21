@@ -25,17 +25,7 @@ class processes:
         # self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
         # self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
 
-    def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
-        print("Processing meats with XArm6...")
-        tray_mesh = spawn_ingredient(self.env, "tray", SE3(1.3, 0.45, 1) * SE3(*ENV_OFFSET))
-
-        bread = self.env_instance.spawn_bread(self.env)
-        bread_locs, bread_meshes = self.env_instance.collect_bread_locations_and_meshes(bread)
-        self.UR3_robot.bread_movement(bread_locs, [3, 0.8, 1.0], bread_meshes)
-
-        placed_meshes = bread_meshes + [tray_mesh]
-        start_pos, end_pos = SE3(3, 0.6, 1).t, SE3(2.45, 0.8, 1).t
-
+    def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes):
         self.UR3_robot.process_food_order(tray_locs, [3, 1, 1], tray_meshes)
         self.UR3_robot.process_food_order(bread_locs, [3, 1, 1], bread_meshes)
 
@@ -97,7 +87,7 @@ class processes:
                 print("Resetting robot to original position...")
                 # Use current q and original q for reverse trajectory
                 q_current = self.meat_robot_ctrl.robot.q.copy()
-                traj_back = rtb.jtraj(q_current, q_original, steps).q
+                traj_back = rtb.jtraj(q_current, self.q_original, steps).q
                 
                 # Move robot back gradually before releasing estop
                 for q in traj_back:
@@ -125,13 +115,13 @@ class processes:
         print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
         return False
     
-    def reset_robot(self):
-        steps = 50
-        traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, self.q_original, steps).q
-        print("Resetting robot to original position...")
-        for q in traj_back:
-            self.meat_robot_ctrl.robot.q = q
-            self.env.draw(self.meat_robot_ctrl.robot)
-            time.sleep(0.05)
+    # def reset_robot(self):
+    #     steps = 50
+    #     traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, self.q_original, steps).q
+    #     print("Resetting robot to original position...")
+    #     for q in traj_back:
+    #         self.meat_robot_ctrl.robot.q = q
+    #         self.env.draw(self.meat_robot_ctrl.robot)
+    #         time.sleep(0.05)
 
-        print("✅ Robot reset complete.")
+    #     print("✅ Robot reset complete.")
