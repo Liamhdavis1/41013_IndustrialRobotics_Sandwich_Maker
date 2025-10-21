@@ -93,9 +93,9 @@ bread_rack = spawn_obj(env, "bread_rack", SE3(0, 0, 0))
 
 # ---------------- Collision setup ----------------
 bench_points = load_mesh_points(ENV["bench"]["path"], num_points=8000)
-ellipsoid_XArm = EllipsoidRobot(XArm, default_height=0.08, default_width=0.04)
-ellipsoid_UR3 = EllipsoidRobot(UR3_robot)
-ellipsoid_irb = EllipsoidRobot(irb)
+ellipsoid_XArm = EllipsoidRobot(XArm, fig=None, default_height=0.08, default_width=0.04)
+ellipsoid_UR3 = EllipsoidRobot(UR3_robot, fig=None, default_height=0.08, default_width=0.04)
+ellipsoid_irb = EllipsoidRobot(irb, fig=None, default_height=0.08, default_width=0.04)
 
 # ---------------- Robot motion + collision check ----------------
 input('break')

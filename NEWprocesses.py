@@ -1,8 +1,12 @@
+import numpy as np
 from math import pi
 from spatialmath import SE3
 from NEWspawnEnv import RobotEnvironment
 from NEWcollisionDetection import CollsionDetection
 from ir_support import EllipsoidRobot
+from roboticstoolbox.backends.PyPlot import PyPlot
+import roboticstoolbox as rtb
+import time
 from IngredientsLiam import spawn_ingredient, ENV_OFFSET
 
 class processes:
@@ -15,10 +19,11 @@ class processes:
         self.UR3_robot = env_instance.UR3_robot
         self.bench_points = env_instance.bench_points
 
-        self.ellipsoid_meat = EllipsoidRobot(self.meat_robot_ctrl.robot)
-        self.ellipsoid_veggie = EllipsoidRobot(self.veggie_robot_ctrl.robot)
-        self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot)
-        self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot)
+
+        self.ellipsoid_meat = EllipsoidRobot(self.meat_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
+        # self.ellipsoid_veggie = EllipsoidRobot(self.veggie_robot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
+        # self.ellipsoid_cobot = EllipsoidRobot(self.cobot_ctrl.robot, fig=None, default_height=0.08, default_width=0.04)
+        # self.ellipsoid_UR3 = EllipsoidRobot(self.UR3_robot.robot, fig=None, default_height=0.08, default_width=0.04)
 
     def process_sandwich_individually(self, meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes):
         print("Processing meats with XArm6...")
@@ -64,19 +69,44 @@ class processes:
 
 
     def force_collision(self):
-        # Simple forced collision with bench by forcing joint configuration into collision pose
-        collision_q = self.meat_robot_ctrl.robot.q.copy()
-        # Example values that likely cause collision (tune for your robot)
-        collision_q[0] += 1.7
-        collision_q[1] += 1.7
+        steps = 50
+        q0 = np.zeros(6)
+        q_pick = self.meat_robot_ctrl.robot.ikine_LM(SE3(2.45, 1, 0.7), q0=q0).q
+        q_original = self.meat_robot_ctrl.robot.q.copy()
 
-        self.meat_robot_ctrl.robot.q = collision_q
-        self.ellipsoid_meat.ellipsoid_for_robot_links(collision_q)
+        # Create trajectory
+        traj = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_pick, steps).q
 
-        if CollsionDetection.detect_collisions(self.ellipsoid_meat, self.bench_points):
-            print("⚠️ Collision successfully forced for meat robot.")
-            return True
-        else:
-            print("❌ Failed to force collision. Adjust joint angles.")
-            return False
+        print("Moving robot to force collision...")
 
+        for q in traj:
+            self.meat_robot_ctrl.robot.q = q
+            self.ellipsoid_meat.ellipsoid_for_robot_links(self.meat_robot_ctrl.robot.q)
+
+        # Check for collision at this step
+            collisions = CollsionDetection.detect_collisions(self.ellipsoid_meat, self.bench_points)
+            if collisions:
+                print(f"⚠️ Collision detected! Movement stopped.")
+                self.meat_robot_ctrl.set_estop(True)  # stop robot immediately
+                return True
+
+            # Update visualization
+            if hasattr(self.env, "step"):
+                self.env.step()  # Swift or other env
+            else:
+                self.meat_robot_ctrl.robot.plot(q, block=False)
+                # print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
+
+            time.sleep(0.05)
+
+        print("❌ No collision detected along trajectory. Adjust joint angles to force collision.")
+        return False
+
+        # traj_back = rtb.jtraj(self.meat_robot_ctrl.robot.q, q_original, steps).q
+        # print("Resetting robot to original position...")
+        # for q in traj_back:
+        #     self.meat_robot_ctrl.robot.q = q
+        #     self.env.draw(self.meat_robot_ctrl.robot)
+        #     time.sleep(0.05)
+
+        # print("✅ Robot reset complete.")

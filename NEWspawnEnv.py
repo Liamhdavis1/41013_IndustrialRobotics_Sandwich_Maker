@@ -78,7 +78,7 @@ class RobotEnvironment:
         self.env.launch(realtime=True)
 
         bench_stl_path = INGREDIENTS['bench']['path']
-        self.bench_points = CollsionDetection.load_mesh_points(bench_stl_path, num_points=8000)
+        self.bench_points = CollsionDetection.load_mesh_points(bench_stl_path, num_points=8000, pose=SE3(*ENV_OFFSET))
 
         self.spawn_items(self.env)
         self.UR3_robot, self.XArm_robot, self.irb_robot, self.Cobot = self.setup_robots(self.env)

@@ -29,8 +29,12 @@ class CollsionDetection:
                 return True
         return False
 
-    def load_mesh_points(stl_path, num_points=10000):
+    def load_mesh_points(stl_path, num_points=10000, pose=None):
         mesh = trimesh.load(stl_path)
-        return mesh.sample(num_points)
+        points = mesh.sample(num_points)
+        if pose is not None:
+            R = pose.A[:3, :3]; t = pose.t
+            points = (R @ points.T).T + t
+        return points
 
 
