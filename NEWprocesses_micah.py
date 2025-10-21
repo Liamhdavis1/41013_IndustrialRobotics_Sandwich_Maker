@@ -113,7 +113,22 @@ class processes:
         
         self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
             self.env,
-            SE3(1.5, 1.0, 1).t, SE3(1.3, 1.0, 1).t,
+            SE3(1.5, 1.0, 1).t, SE3(1.2, 1.0, 1).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes)
+        
+
+        success = self.cobot_ctrl.move_to_start_position(
+        self.cobot_ctrl.robot,
+        self.env,
+        target_pos=[1.0 - offset, 1, 1],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+        
+        self.cobot_ctrl.rmrc_vertical_movement(self.cobot_ctrl.robot,
+            self.env,
+            SE3(1.3, 1.0, 1).t, SE3(0.4, 1.0, 1).t,
             tool_orientation=[pi,0,0],
             mesh_list=meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes)
 
