@@ -85,8 +85,10 @@ class IngredientSelector(tk.Tk):
         meat_selection = [ing for ing in selected if ing in meat_ingredients]
         veggie_selection = [ing for ing in selected if ing in veggie_ingredients]
         bread_selection = ["bread_top", "bread_bottom"]
+        tray_selection = ["tray"]
 
-        bread_locs, bread_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.bread_piles, bread_selection)
+        tray_locs, tray_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.tray_pile, tray_selection)
+        bread_locs, bread_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.bread_piles, bread_selection)
         meat_locs, meat_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, meat_selection)
         veggie_locs, veggie_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, veggie_selection)
 
@@ -95,7 +97,7 @@ class IngredientSelector(tk.Tk):
         # Use the process_handler instance method here
         self.process_thread = threading.Thread(
             target=self.process_handler.process_sandwich_individually,
-            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes),
+            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes),
             daemon=True)
         self.process_thread.start()
 

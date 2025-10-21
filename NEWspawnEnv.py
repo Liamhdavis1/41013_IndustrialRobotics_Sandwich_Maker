@@ -18,12 +18,12 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 INGREDIENTS = {
     "glass": {"path": os.path.join(current_path, "env", "glass.stl"),
               "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 0.4]},
-    "bench": {"path": os.path.join(current_path, "env", "benchv2.stl"),
+    "bench": {"path": os.path.join(current_path, "env", "benchv3.stl"),
               "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 1]},
-    "bread_rack": {"path": os.path.join(current_path, "env", "bread_rack.stl"),
-                   "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 1]},
+    # "bread_rack": {"path": os.path.join(current_path, "env", "bread_rack.stl"),
+    #                "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 1]},
     "tray": {"path": os.path.join(current_path, "env", "tray.stl"),
-             "scale": (0.065, 0.08, 0.08), "color": [0.8, 0.8, 0.8, 1]},
+             "scale": (0.055, 0.07, 0.07), "color": [0.8, 0.8, 0.8, 1]},
     "bread_bottom": {"path": os.path.join(current_path, "env", "sandwich", "bread-bottom.stl"),
                      "scale": (0.1, 0.1, 0.1), "color": [0.95, 0.77, 0.53, 1]},
     "bread_top": {"path": os.path.join(current_path, "env", "sandwich", "bread-top.stl"),
@@ -83,7 +83,9 @@ class RobotEnvironment:
         self.spawn_items(self.env)
         self.UR3_robot, self.XArm_robot, self.irb_robot, self.Cobot = self.setup_robots(self.env)
         self.piles = self.spawn_all_piles(self.env)
-        self.bread_piles = self.spawn_bread(self.env)
+        self.bread_piles = self.spawn_bread_bottom(self.env)
+        self.bread_piles = self.spawn_bread_top(self.env)
+        self.tray_pile = self.spawn_tray(self.env)
         self.env.set_camera_pose([3, -3, 2], [1, 0.5, 0])
         self.env.step()
 
@@ -110,19 +112,48 @@ class RobotEnvironment:
     def spawn_items(self, env):
         spawn_ingredient(env, "bench", SE3(*ENV_OFFSET))
         spawn_ingredient(env, "glass", SE3(0.5, 0, 0) * SE3(*ENV_OFFSET))
-        spawn_ingredient(env, "bread_rack", SE3(-0.15, 0, 0) * SE3(ENV_OFFSET))
+        # spawn_ingredient(env, "bread_rack", SE3(-0.15, 0, 0) * SE3(ENV_OFFSET))
 
 
-    def spawn_bread(self, env):
-        bread_piles, storage_z = {}, [1.4, 1.1]
-        for ingr in ["bread_bottom", "bread_top"]:
+    # def spawn_bread(self, env):
+    #     bread_piles, storage_z = {}, [1.4, 1.1]
+    #     for ingr in ["bread_bottom", "bread_top"]:
+    #         bread_piles[ingr] = []
+    #         for z in storage_z:
+    #             for i in range(5):
+    #                 pose = SE3(2.2, -0.2 + i * 0.2, z) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+    #                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
+    #     return bread_piles
+
+    def spawn_bread_bottom(self, env):
+        bread_piles = {}
+         # Fixed height without storage_z list
+        for ingr in ["bread_bottom", ]:
             bread_piles[ingr] = []
-            for z in storage_z:
-                for i in range(5):
-                    pose = SE3(2.2, -0.2 + i * 0.2, z) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
-                    bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
+            for i in range(5):
+                pose = SE3(1.6 + i * 0.15, -0.3 , 1.02) * SE3.Trans(ENV_OFFSET) 
+                bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
 
+    def spawn_bread_top(self, env):
+        bread_piles = {}
+        # Fixed height without storage_z list
+        for ingr in ["bread_top", ]:
+            bread_piles[ingr] = []
+            for i in range(5):
+                pose = SE3(-1.2 , 0.55 - i * 0.15, 0.98) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+                bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
+        return bread_piles
+
+    def spawn_tray(self, env):
+        tray_pile = {}
+         # Fixed height without storage_z list
+        for ingr in ["tray", ]:
+            tray_pile[ingr] = []
+            for i in range(5):
+                pose = SE3(2, 0.45, 1.1 - i * 0.02) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+                tray_pile[ingr].append(spawn_ingredient(env, ingr, pose))
+        return tray_pile
 
     def spawn_all_piles(self, env):
         cfgs = [
@@ -149,10 +180,10 @@ class RobotEnvironment:
         return locs, meshes
 
 
-    def collect_bread_locations_and_meshes(self, bread_piles):
+    def collect_bread_locations_and_meshes(self, piles, selected):
         locs, meshes = [], []
-        for n in ["bread_top", "bread_bottom"]:
-            for mesh in bread_piles.get(n, [])[:1]:
+        for name in selected:
+            for mesh in piles.get(name, [])[:1]:
                 pos = SE3(mesh.T).t
                 locs.append(list(pos))
                 meshes.append(mesh)
