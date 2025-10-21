@@ -2,12 +2,14 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import threading
+import serial
 # from IngredientsLiam import RobotEnvironment
 from NEWspawnEnv import RobotEnvironment
 from NEWprocesses_micah import processes
 import matplotlib.pyplot as plt
 from CollisionDetectionInEnvronment import CollsionDetection
 from ir_support import EllipsoidRobot
+
 
 ingredients = ["ham", "tomato", "lettuce", "salami", "beef", "chicken", "cucumber", "beetroot"]
 meat_ingredients = {"ham", "salami", "beef", "chicken"}
@@ -30,8 +32,12 @@ class IngredientSelector(tk.Tk):
 
         self.estop_active = False
         self.process_thread = None
-        plt.close('all')
 
+        # Initialize serial port and start reader thread
+        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        threading.Thread(target=self.read_from_serial, daemon=True).start()
+
+        plt.close('all')
 
     def create_widgets(self):
         frame = ttk.LabelFrame(self, text="Select Ingredients")
@@ -51,31 +57,6 @@ class IngredientSelector(tk.Tk):
         self.estop_button = ttk.Button(self, text="Emergency Stop", command=self.toggle_estop)
         self.estop_button.pack(pady=5)
 
-
-    # def start_process(self):
-    #     if self.process_thread and self.process_thread.is_alive():
-    #         print("Process is already running.")
-    #         return
-
-    #     selected = [ing for ing, var in self.ingredient_vars.items() if var.get()]
-    #     meat_selection = [ing for ing in selected if ing in meat_ingredients]
-    #     veggie_selection = [ing for ing in selected if ing in veggie_ingredients]
-    #     bread_selection = ["bread_top", "bread_bottom"]
-
-    #     bread_locs, bread_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.bread_piles, bread_selection)
-    #     meat_locs, meat_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, meat_selection)
-    #     veggie_locs, veggie_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, veggie_selection)
-
-    #     # Clear estop
-    #     self.set_estop_for_all(False)
-
-    #     # Start thread
-    #     self.process_thread = threading.Thread(
-    #         target=self.robot_env.process_sandwich_individually,
-    #         args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes),
-    #         daemon=True)
-    #     self.process_thread.start()
-
     def start_process(self):
         if self.process_thread and self.process_thread.is_alive():
             print("Process is already running.")
@@ -85,17 +66,18 @@ class IngredientSelector(tk.Tk):
         meat_selection = [ing for ing in selected if ing in meat_ingredients]
         veggie_selection = [ing for ing in selected if ing in veggie_ingredients]
         bread_selection = ["bread_top", "bread_bottom"]
+        tray_selection = ["tray"]
 
-        bread_locs, bread_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.bread_piles, bread_selection)
+        tray_locs, tray_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.tray_pile, tray_selection)
+        bread_locs, bread_meshes = self.robot_env.collect_bread_locations_and_meshes(self.robot_env.bread_piles, bread_selection)
         meat_locs, meat_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, meat_selection)
         veggie_locs, veggie_meshes = self.robot_env.collect_ingredient_locations(self.robot_env.piles, veggie_selection)
 
         self.set_estop_for_all(False)
 
-        # Use the process_handler instance method here
         self.process_thread = threading.Thread(
             target=self.process_handler.process_sandwich_individually,
-            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes),
+            args=(meat_locs, meat_meshes, veggie_locs, veggie_meshes, bread_locs, bread_meshes, tray_locs, tray_meshes),
             daemon=True)
         self.process_thread.start()
 
@@ -125,11 +107,24 @@ class IngredientSelector(tk.Tk):
         ]:
             robot_ctrl.set_estop(status)
 
+    def read_from_serial(self):
+        while True:
+            try:
+                line = self.serial_port.readline().decode().strip()
+                if line == "ESTOP_ON":
+                    self.estop_active = True
+                    self.set_estop_for_all(True)
+                    self.estop_button.config(text="Resume")
+                elif line == "ESTOP_OFF":
+                    self.estop_active = False
+                    self.set_estop_for_all(False)
+                    self.estop_button.config(text="Emergency Stop")
+            except Exception as e:
+                print(f"Serial read error: {e}")
+
     # def Collsion(robot):
     #     stl_path = os.path.join(os.path.dirname(__file__), "env", "benchv2.stl")
     #     bench_points = CollsionDetection.load_mesh_points(stl_path, num_points=8000)
     #     ellipsoid_robot = EllipsoidRobot(robot)
     #     ellipsoid_robot.ellipsoid_for_robot_links(robot.q)
     #     collisions = CollsionDetection.detect_collisions(ellipsoid_robot, bench_points)
-
-        
