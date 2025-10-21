@@ -101,33 +101,86 @@ class processes:
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
+        
+        mesh_list = meat_meshes + bread_bottom_meshes + tray_meshes
+        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
+            self.env,
+            SE3(1.75 - offset, 1, base_z).t, SE3(1.5 - offset, 1, base_z).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=mesh_list,
+            mesh_offset_along_x=offset,
+            mesh_z_offsets=mesh_z_offsets)
+        
+        # Move to position after sliding
+        success = self.veggie_robot_ctrl.move_to_start_position(
+        self.veggie_robot_ctrl.robot,
+        self.env,
+        target_pos=[.5, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
 
 
         print("Processing veggies with IRB...")
 
 
+        # Adjust veggie initial z with gap on meat final z
+        if len(meat_locs) > 0:
+            veggie_initial_z = meat_final_z + 0.02  # Add gap for stacking veggies on meat
+        else:
+            veggie_initial_z = bread_bottom_final_z + 0.02  # No meat, stack on bread
 
-        veggie_initial_z = meat_final_z if len(meat_locs) > 0 else bread_bottom_final_z + 0.02  # Normal gap or special if no meat
         veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
-        
+
         # Move to position before sliding
         success = self.veggie_robot_ctrl.move_to_start_position(
-        self.veggie_robot_ctrl.robot,
-        self.env,
-        target_pos=[1.5 + offset, 1, base_z],
-        tool_orientation=[pi, 0, 0],
-        mesh_list=None
-    )
-        # Slide order
-        mesh_list = meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes
-        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
-        self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
+            self.veggie_robot_ctrl.robot,
             self.env,
-            SE3(1.5 + offset, 1.0, base_z).t, SE3(1.3 + offset, 1.0, base_z).t,
-            tool_orientation=[pi,0,0],
+            target_pos=[1.5 + offset, 1, base_z],
+            tool_orientation=[pi, 0, 0],
+            mesh_list=None
+        )
+
+        # Slide order meshes bottom to top: tray, bread, meat, veggies
+        mesh_list = tray_meshes + bread_bottom_meshes + meat_meshes + veggie_meshes
+
+        # Calculate updated z offsets relative to base_z
+        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+
+        self.veggie_robot_ctrl.rmrc_vertical_movement(
+            self.veggie_robot_ctrl.robot,
+            self.env,
+            SE3(1.5 + offset, 1.0, base_z).t,
+            SE3(1.3 + offset, 1.0, base_z).t,
+            tool_orientation=[pi, 0, 0],
             mesh_list=mesh_list,
             mesh_offset_along_x=-offset,
-            mesh_z_offsets=mesh_z_offsets)
+            mesh_z_offsets=mesh_z_offsets
+        )
+
+
+    #     veggie_initial_z = meat_final_z if len(meat_locs) > 0 else bread_bottom_final_z + 0.02  # Normal gap or special if no meat
+    #     veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
+        
+    #     # Move to position before sliding
+    #     success = self.veggie_robot_ctrl.move_to_start_position(
+    #     self.veggie_robot_ctrl.robot,
+    #     self.env,
+    #     target_pos=[1.5 + offset, 1, base_z],
+    #     tool_orientation=[pi, 0, 0],
+    #     mesh_list=None
+    # )
+    #     # Slide order
+    #     mesh_list = meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes
+    #     mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+    #     self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
+    #         self.env,
+    #         SE3(1.5 + offset, 1.0, base_z).t, SE3(1.3 + offset, 1.0, base_z).t,
+    #         tool_orientation=[pi,0,0],
+    #         mesh_list=mesh_list,
+    #         mesh_offset_along_x=-offset,
+    #         mesh_z_offsets=mesh_z_offsets)
 
         # Assuming bread_top would be added similarly if needed
         # For example:
