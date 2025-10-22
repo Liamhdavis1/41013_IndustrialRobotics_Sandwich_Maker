@@ -133,8 +133,8 @@ class FoodOrderRobotv1:
         q_target, success, error = self.solve_ik_robust(robot, target_pose, robot.q)
 
         if not success:
-            print(f"  ❌ Failed to solve IK for start position {target_pos}")
-            print(f"     Error: {error:.2f} mm")
+            print(f"Failed to solve IK for start position {target_pos}")
+            print(f"Error: {error:.2f} mm")
             return False
 
         print(f"  ✓ Moving to start position {target_pos} (IK+jtraj)...")
