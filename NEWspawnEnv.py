@@ -105,7 +105,7 @@ class RobotEnvironment:
         irb_robot = abb_irb_120()
         Cobot = Cobot320()
         irb_robot.base = SE3(0, 0.1, 1) * SE3.Trans(ENV_OFFSET)
-        Cobot.base = SE3(-0.95, 0.2, 1) * SE3.Trans(ENV_OFFSET)
+        Cobot.base = SE3(-0.8, 0.6, 1) * SE3.Trans(ENV_OFFSET)
         XArm_robot.base = SE3(0.9, 0.15, 1) * SE3.Trans(ENV_OFFSET)
         UR3_robot.base = SE3(1.6, 0.2, 1) * SE3.Trans(ENV_OFFSET)
         for r in [XArm_robot, irb_robot, UR3_robot, Cobot]:
