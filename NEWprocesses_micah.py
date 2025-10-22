@@ -54,7 +54,7 @@ class processes:
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
         self.UR3_robot.rmrc_vertical_movement(self.UR3_robot.robot,
             self.env,
-            SE3(2.7 + offset, 1, base_z).t, SE3(2.45 + offset, 1, base_z).t,
+            SE3(2.7 + offset, 1, base_z).t, SE3(2.45, 1, base_z).t,
             tool_orientation=[pi,0,0],
             mesh_list=mesh_list,
             mesh_offset_along_x=-offset,
@@ -65,7 +65,7 @@ class processes:
         success = self.UR3_robot.move_to_start_position(
         self.UR3_robot.robot,
         self.env,
-        target_pos=[2.7, 1, base_z],
+        target_pos=[2.9, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -73,7 +73,7 @@ class processes:
 
         # Process food order for meats with special gap since previous is bread
         meat_initial_z = bread_bottom_final_z + 0.02  # To make gap 0.3 instead of 0.1
-        meat_final_z = self.meat_robot_ctrl.process_food_order(meat_locs, [2.45, 1, base_z], meat_meshes, initial_z=meat_initial_z)
+        meat_final_z = self.meat_robot_ctrl.process_food_order(meat_locs, [2.45-offset/2, 1, base_z], meat_meshes, initial_z=meat_initial_z)
         # Move to position before sliding
         success = self.meat_robot_ctrl.move_to_start_position(
         self.meat_robot_ctrl.robot,
@@ -87,7 +87,7 @@ class processes:
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
         self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
             self.env,
-            SE3(2.45 + offset, 1, base_z).t, SE3(1.75 + offset, 1, base_z).t,
+            SE3(2.45 + offset, 1, base_z).t, SE3(1.7, 1, base_z).t,
             tool_orientation=[pi,0,0],
             mesh_list=mesh_list,
             mesh_offset_along_x=-offset,
@@ -97,33 +97,36 @@ class processes:
         success = self.meat_robot_ctrl.move_to_start_position(
         self.meat_robot_ctrl.robot,
         self.env,
-        target_pos=[2.45, 1, base_z],
+        target_pos=[2.7, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
         
+        
+        
+        print("Processing veggies with IRB...")
+
+        # Move to position before sliding
+        success = self.veggie_robot_ctrl.move_to_start_position(
+        self.veggie_robot_ctrl.robot,
+        self.env,
+        target_pos=[1.7 - offset, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+
         mesh_list = meat_meshes + bread_bottom_meshes + tray_meshes
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
         self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
             self.env,
-            SE3(1.75 - offset, 1, base_z).t, SE3(1.5 - offset, 1, base_z).t,
+            SE3(1.7 - offset, 1, base_z).t, SE3(1.2, 1, base_z).t,
             tool_orientation=[pi,0,0],
             mesh_list=mesh_list,
             mesh_offset_along_x=offset,
             mesh_z_offsets=mesh_z_offsets)
         
-        # Move to position after sliding
-        success = self.veggie_robot_ctrl.move_to_start_position(
-        self.veggie_robot_ctrl.robot,
-        self.env,
-        target_pos=[.5, 1, base_z],
-        tool_orientation=[pi, 0, 0],
-        mesh_list=None
-    )
 
-
-        print("Processing veggies with IRB...")
-
+        
 
         # Adjust veggie initial z with gap on meat final z
         if len(meat_locs) > 0:
@@ -131,13 +134,13 @@ class processes:
         else:
             veggie_initial_z = bread_bottom_final_z + 0.02  # No meat, stack on bread
 
-        veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.5, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
+        veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.2 + offset, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
 
         # Move to position before sliding
         success = self.veggie_robot_ctrl.move_to_start_position(
             self.veggie_robot_ctrl.robot,
             self.env,
-            target_pos=[1.5 + offset, 1, base_z],
+            target_pos=[1.2 + 2*offset, 1, base_z],
             tool_orientation=[pi, 0, 0],
             mesh_list=None
         )
@@ -151,8 +154,8 @@ class processes:
         self.veggie_robot_ctrl.rmrc_vertical_movement(
             self.veggie_robot_ctrl.robot,
             self.env,
-            SE3(1.5 + offset, 1.0, base_z).t,
-            SE3(1.3 + offset, 1.0, base_z).t,
+            SE3(1.2 + offset, 1.0, base_z).t,
+            SE3(1, 1.0, base_z).t,
             tool_orientation=[pi, 0, 0],
             mesh_list=mesh_list,
             mesh_offset_along_x=-offset,
