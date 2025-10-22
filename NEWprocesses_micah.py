@@ -78,7 +78,7 @@ class processes:
         success = self.meat_robot_ctrl.move_to_start_position(
         self.meat_robot_ctrl.robot,
         self.env,
-        target_pos=[2.45 + offset, 1, base_z],
+        target_pos=[2.55 + offset, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -87,7 +87,7 @@ class processes:
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
         self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
             self.env,
-            SE3(2.45 + offset, 1, base_z).t, SE3(1.7, 1, base_z).t,
+            SE3(2.45 + offset - 0.5, 1, base_z).t, SE3(1.7, 1, base_z).t,
             tool_orientation=[pi,0,0],
             mesh_list=mesh_list,
             mesh_offset_along_x=-offset,
@@ -110,7 +110,7 @@ class processes:
         success = self.veggie_robot_ctrl.move_to_start_position(
         self.veggie_robot_ctrl.robot,
         self.env,
-        target_pos=[1.7 - offset, 1, base_z],
+        target_pos=[1.7 - offset/2, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -136,7 +136,7 @@ class processes:
 
         
         veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, 
-            [1.1 + 2*offset, 1, base_z],
+            [1.1 + 1.4*offset, 1, base_z],
             veggie_meshes, initial_z=veggie_initial_z)
 
         # Move to position before sliding
@@ -179,7 +179,7 @@ class processes:
 
 
         self.cobot_ctrl.process_food_order(bread_top_locs, 
-                                           [1.05-offset/2, 0.75, base_z + 0.02], 
+                                           [1.05-offset-0.02, 0.75, base_z + 0.02], 
                                            bread_top_meshes, 
                                            tool_orientation=[0,0,0], 
                                            initial_z=veggie_final_z, grip_offset=SE3.Rz(pi))

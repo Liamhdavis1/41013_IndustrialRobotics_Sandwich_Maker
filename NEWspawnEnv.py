@@ -11,10 +11,10 @@ from FoodOrderRobotv3 import FoodOrderRobotv1
 import os
 import trimesh
 from NEWcollisionDetection import CollsionDetection  # your collision utils
-
+ 
 ENV_OFFSET = np.array([1.5, 0.5, 0.0])
 current_path = os.path.abspath(os.path.dirname(__file__))
-
+ 
 INGREDIENTS = {
     "glass": {"path": os.path.join(current_path, "env", "glassv2.stl"),
               "scale": (1.2, 1, 1.2), "color": [0.6, 0.6, 0.6, 0.4]},
@@ -59,11 +59,11 @@ INGREDIENTS = {
     "beetroot": {"path": os.path.join(current_path, "env", "sandwich", "tomato.stl"),
                  "scale": (0.04, 0.04, 0.04), "color": [0.5, 0.09, 0.4, 1]}
 }
-
-
+ 
+ 
 spawned_meshes = {}
-
-
+ 
+ 
 def spawn_ingredient(env, name, pose):
     info = INGREDIENTS[name]
     mesh = Mesh(filename=info["path"], pose=pose,
@@ -71,8 +71,8 @@ def spawn_ingredient(env, name, pose):
     env.add(mesh)
     spawned_meshes[f"{name}_{len(spawned_meshes)}"] = mesh
     return mesh
-
-
+ 
+ 
 def spawn_pile(env, ingredient, n, center, dx_range, dy_range, dz_step, dz_jitter):
     x0, y0, z0 = np.array(center) + ENV_OFFSET
     pile = []
@@ -83,37 +83,36 @@ def spawn_pile(env, ingredient, n, center, dx_range, dy_range, dz_step, dz_jitte
         pose = SE3(x0 + dx, y0 + dy, z0 + dz)
         pile.append(spawn_ingredient(env, ingredient, pose))
     return pile
-
-
+ 
+ 
 class RobotEnvironment:
     def __init__(self):
         print("Launching Swift environment...")
         self.env = swift.Swift()
         self.env.launch(realtime=True)
-
+ 
         bench_stl_path = INGREDIENTS['bench']['path']
         self.bench_points = CollsionDetection.load_mesh_points(bench_stl_path, num_points=8000, pose=SE3(*ENV_OFFSET))
-
+ 
         self.spawn_items(self.env)
         self.UR3_robot, self.XArm_robot, self.irb_robot, self.Cobot = self.setup_robots(self.env)
         self.piles = self.spawn_all_piles(self.env)
         self.bread_piles = {}
         self.bread_piles.update(self.spawn_bread_bottom(self.env))
         self.bread_piles.update(self.spawn_bread_top(self.env))
-
+ 
         # self.bread_piles = self.spawn_bread_bottom(self.env)
         # self.bread_piles = self.spawn_bread_top(self.env)
         self.tray_pile = self.spawn_tray(self.env)
         self.env.set_camera_pose([3, -3, 2], [1, 0.5, 0])
         self.env.step()
-
+ 
         self.meat_robot_ctrl = FoodOrderRobotv1(self.XArm_robot, self.env, robot_name='meat')
         self.veggie_robot_ctrl = FoodOrderRobotv1(self.irb_robot, self.env, robot_name='veggie')
         self.cobot_ctrl = FoodOrderRobotv1(self.Cobot, self.env, robot_name='cobot')
         self.UR3_robot = FoodOrderRobotv1(self.UR3_robot, self.env, robot_name='UR3')
-
-
-
+ 
+ 
     def setup_robots(self, env):
         UR3_robot = UR3()
         XArm_robot = XArm6()
@@ -126,8 +125,8 @@ class RobotEnvironment:
         for r in [XArm_robot, irb_robot, UR3_robot, Cobot]:
             r.add_to_env(env)
         return UR3_robot, XArm_robot, irb_robot, Cobot
-
-
+ 
+ 
     def spawn_items(self, env):
         spawn_ingredient(env, "bench", SE3(*ENV_OFFSET))
         spawn_ingredient(env, "fire_sprinkiler", SE3(0.0, 0.0, 0.2))
@@ -138,10 +137,10 @@ class RobotEnvironment:
         spawn_ingredient(env, "estop", SE3(0.0, 0.0, 0.0)*SE3(*ENV_OFFSET))
         spawn_ingredient(env, "sign", SE3(0.0, 0.0, 0.0))
         # spawn_ingredient(env, "person", SE3(0.0, 0.0, 0.0))
-
+ 
         # spawn_ingredient(env, "bread_rack", SE3(-0.15, 0, 0) * SE3(ENV_OFFSET))
-
-
+ 
+ 
     # def spawn_bread(self, env):
     #     bread_piles, storage_z = {}, [1.4, 1.1]
     #     for ingr in ["bread_bottom", "bread_top"]:
@@ -151,17 +150,17 @@ class RobotEnvironment:
     #                 pose = SE3(2.2, -0.2 + i * 0.2, z) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
     #                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
     #     return bread_piles
-
+ 
     def spawn_bread_bottom(self, env):
         bread_piles = {}
          # Fixed height without storage_z list
         for ingr in ["bread_bottom", ]:
             bread_piles[ingr] = []
             for i in range(3):
-                pose = SE3(1.7 + i * 0.12, -0.2 , 1 ) * SE3.Trans(ENV_OFFSET) 
+                pose = SE3(1.7 + i * 0.12, -0.2 , 1 ) * SE3.Trans(ENV_OFFSET)
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
-
+ 
     def spawn_bread_top(self, env):
         bread_piles = {}
         # Fixed height without storage_z list
@@ -171,17 +170,17 @@ class RobotEnvironment:
                 pose = SE3(-1.3 + i * 0.12, 0.4, 0.98) * SE3.Trans(ENV_OFFSET)
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
-
+ 
     def spawn_tray(self, env):
         tray_pile = {}
          # Fixed height without storage_z list
         for ingr in ["tray", ]:
             tray_pile[ingr] = []
             for i in range(5):
-                pose = SE3(2, 0.45, 1.1 - i * 0.02) * SE3.Trans(ENV_OFFSET) 
+                pose = SE3(2, 0.45, 1.1 - i * 0.02) * SE3.Trans(ENV_OFFSET)
                 tray_pile[ingr].append(spawn_ingredient(env, ingr, pose))
         return tray_pile
-
+ 
     def spawn_all_piles(self, env):
         cfgs = [
             ("ham", 8, (1.2, -0.35, 0.92)), ("tomato", 12, (0.25, -0.35, 0.92)),
@@ -195,8 +194,8 @@ class RobotEnvironment:
             for n, count, center in cfgs
         }
         return piles
-
-
+ 
+ 
     def collect_ingredient_locations(self, piles, selected):
         locs, meshes = [], []
         for name in selected:
@@ -205,8 +204,8 @@ class RobotEnvironment:
                 locs.append(list(pos))
                 meshes.append(mesh)
         return locs, meshes
-
-
+ 
+ 
     def collect_bread_locations_and_meshes(self, piles, selected):
         locs, meshes = [], []
         for name in selected:
