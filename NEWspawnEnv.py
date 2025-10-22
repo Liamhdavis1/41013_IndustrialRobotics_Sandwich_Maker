@@ -17,7 +17,7 @@ current_path = os.path.abspath(os.path.dirname(__file__))
 
 INGREDIENTS = {
     "glass": {"path": os.path.join(current_path, "env", "glassv2.stl"),
-              "scale": (1.2, 1, 1), "color": [0.6, 0.6, 0.6, 0.4]},
+              "scale": (1.2, 1, 1.2), "color": [0.6, 0.6, 0.6, 0.4]},
     "bench": {"path": os.path.join(current_path, "env", "benchv3.stl"),
               "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 1]},
     "fire_extinguisher": {"path": os.path.join(current_path, "env", "fire_extinguisher.stl"),
@@ -30,6 +30,10 @@ INGREDIENTS = {
               "scale": (1, 1, 1), "color": [0, 0, 0, 1]},
     "estop": {"path": os.path.join(current_path, "env", "estopv3.stl"),
               "scale": (1, 1, 1), "color": [0.8, 0.1, 0.1, 1]},
+    "sign": {"path": os.path.join(current_path, "env", "SIGNv3.stl"),
+              "scale": (1, 1, 1), "color": [0.8, 0.1, 0.1, 1]},
+    # "person": {"path": os.path.join(current_path, "env", "person.stl"),
+    #           "scale": (1, 1, 1), "color": [1,1,1, 1]},
     # "bread_rack": {"path": os.path.join(current_path, "env", "bread_rack.stl"),
     #                "scale": (1, 1, 1), "color": [0.6, 0.6, 0.6, 1]},
     "tray": {"path": os.path.join(current_path, "env", "tray.stl"),
@@ -126,12 +130,14 @@ class RobotEnvironment:
 
     def spawn_items(self, env):
         spawn_ingredient(env, "bench", SE3(*ENV_OFFSET))
-        spawn_ingredient(env, "fire_sprinkiler", SE3(0.0, 0.0, 0.0))
+        spawn_ingredient(env, "fire_sprinkiler", SE3(0.0, 0.0, 0.2))
         spawn_ingredient(env, "glass", SE3(0.0, 0.0, 0.0))
         spawn_ingredient(env, "fire_extinguisher", SE3(0.0, 0.0, 0.0))
         # spawn_ingredient(env, "room", SE3(0.0, 0.0, 0.0))
         # spawn_ingredient(env, "gui", SE3(0.0, 0.0, 0.0))
         spawn_ingredient(env, "estop", SE3(0.0, 0.0, 0.0)*SE3(*ENV_OFFSET))
+        spawn_ingredient(env, "sign", SE3(0.0, 0.0, 0.0))
+        # spawn_ingredient(env, "person", SE3(0.0, 0.0, 0.0))
 
         # spawn_ingredient(env, "bread_rack", SE3(-0.15, 0, 0) * SE3(ENV_OFFSET))
 
