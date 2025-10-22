@@ -41,66 +41,66 @@ class processes:
 
 
 
-    #     # Move to position before sliding
-    #     success = self.UR3_robot.move_to_start_position(
-    #     self.UR3_robot.robot,
-    #     self.env,
-    #     target_pos=[2.7 + offset, 1, base_z],
-    #     tool_orientation=[pi, 0, 0],
-    #     mesh_list=None
-    # )
-    #     # Slide order
-    #     mesh_list = bread_bottom_meshes + tray_meshes
-    #     mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
-    #     self.UR3_robot.rmrc_vertical_movement(self.UR3_robot.robot,
-    #         self.env,
-    #         SE3(2.7 + offset, 1, base_z).t, SE3(2.45, 1, base_z).t,
-    #         tool_orientation=[pi,0,0],
-    #         mesh_list=mesh_list,
-    #         mesh_offset_along_x=-offset,
-    #         mesh_z_offsets=mesh_z_offsets)  # Fixed typo: removed meat_meshes
+        # Move to position before sliding
+        success = self.UR3_robot.move_to_start_position(
+        self.UR3_robot.robot,
+        self.env,
+        target_pos=[2.7 + offset, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+        # Slide order
+        mesh_list = bread_bottom_meshes + tray_meshes
+        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+        self.UR3_robot.rmrc_vertical_movement(self.UR3_robot.robot,
+            self.env,
+            SE3(2.7 + offset, 1, base_z).t, SE3(2.45, 1, base_z).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=mesh_list,
+            mesh_offset_along_x=-offset,
+            mesh_z_offsets=mesh_z_offsets)  # Fixed typo: removed meat_meshes
 
 
-    #     # Move to position after sliding
-    #     success = self.UR3_robot.move_to_start_position(
-    #     self.UR3_robot.robot,
-    #     self.env,
-    #     target_pos=[2.9, 1, base_z],
-    #     tool_orientation=[pi, 0, 0],
-    #     mesh_list=None
-    # )
+        # Move to position after sliding
+        success = self.UR3_robot.move_to_start_position(
+        self.UR3_robot.robot,
+        self.env,
+        target_pos=[2.9, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
 
 
-    #     # Process food order for meats with special gap since previous is bread
+        # Process food order for meats with special gap since previous is bread
         meat_initial_z = bread_bottom_final_z + 0.02  # To make gap 0.3 instead of 0.1
         meat_final_z = self.meat_robot_ctrl.process_food_order(meat_locs, [2.45-offset/2, 1, base_z], meat_meshes, initial_z=meat_initial_z)
-    #     # Move to position before sliding
-    #     success = self.meat_robot_ctrl.move_to_start_position(
-    #     self.meat_robot_ctrl.robot,
-    #     self.env,
-    #     target_pos=[2.45 + offset, 1, base_z],
-    #     tool_orientation=[pi, 0, 0],
-    #     mesh_list=None
-    # )
-    #     # Slide order
-    #     mesh_list = meat_meshes + bread_bottom_meshes + tray_meshes
-    #     mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
-    #     self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
-    #         self.env,
-    #         SE3(2.45 + offset, 1, base_z).t, SE3(1.7, 1, base_z).t,
-    #         tool_orientation=[pi,0,0],
-    #         mesh_list=mesh_list,
-    #         mesh_offset_along_x=-offset,
-    #         mesh_z_offsets=mesh_z_offsets)
+        # Move to position before sliding
+        success = self.meat_robot_ctrl.move_to_start_position(
+        self.meat_robot_ctrl.robot,
+        self.env,
+        target_pos=[2.45 + offset, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
+        # Slide order
+        mesh_list = meat_meshes + bread_bottom_meshes + tray_meshes
+        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+        self.meat_robot_ctrl.rmrc_vertical_movement(self.meat_robot_ctrl.robot,
+            self.env,
+            SE3(2.45 + offset, 1, base_z).t, SE3(1.7, 1, base_z).t,
+            tool_orientation=[pi,0,0],
+            mesh_list=mesh_list,
+            mesh_offset_along_x=-offset,
+            mesh_z_offsets=mesh_z_offsets)
         
-    #     # Move to position after sliding
-    #     success = self.meat_robot_ctrl.move_to_start_position(
-    #     self.meat_robot_ctrl.robot,
-    #     self.env,
-    #     target_pos=[2.7, 1, base_z],
-    #     tool_orientation=[pi, 0, 0],
-    #     mesh_list=None
-    # )
+        # Move to position after sliding
+        success = self.meat_robot_ctrl.move_to_start_position(
+        self.meat_robot_ctrl.robot,
+        self.env,
+        target_pos=[2.7, 1, base_z],
+        tool_orientation=[pi, 0, 0],
+        mesh_list=None
+    )
         
         
         
@@ -119,7 +119,7 @@ class processes:
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
         self.veggie_robot_ctrl.rmrc_vertical_movement(self.veggie_robot_ctrl.robot,
             self.env,
-            SE3(1.7 - offset, 1, base_z).t, SE3(1.2, 1, base_z).t,
+            SE3(1.7 - offset, 1, base_z).t, SE3(1.1, 1, base_z).t,
             tool_orientation=[pi,0,0],
             mesh_list=mesh_list,
             mesh_offset_along_x=offset,
@@ -134,9 +134,35 @@ class processes:
         else:
             veggie_initial_z = bread_bottom_final_z + 0.02  # No meat, stack on bread
 
-        veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, [1.2 + offset, 1, base_z], veggie_meshes, initial_z=veggie_initial_z)
+        
+        veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, 
+            [1.1 + 2*offset, 1, base_z],
+            veggie_meshes, initial_z=veggie_initial_z)
 
         # Move to position before sliding
+        success = self.veggie_robot_ctrl.move_to_start_position(
+            self.veggie_robot_ctrl.robot,
+            self.env,
+            target_pos=[1.1 + 2*offset, 1, base_z],
+            tool_orientation=[pi, 0, 0],
+            mesh_list=None
+        )
+
+        # sliding to liam
+        mesh_list = meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes
+        mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
+        self.veggie_robot_ctrl.rmrc_vertical_movement(
+            self.veggie_robot_ctrl.robot,
+            self.env,
+            SE3(1.1, 1.0, base_z).t,
+            SE3(1.05, 0.75, base_z).t,
+            tool_orientation=[pi, 0, 0],
+            mesh_list=mesh_list,
+            mesh_offset_along_x=-offset,
+            mesh_z_offsets=mesh_z_offsets
+        )
+
+        # moves out of way
         success = self.veggie_robot_ctrl.move_to_start_position(
             self.veggie_robot_ctrl.robot,
             self.env,
@@ -145,57 +171,47 @@ class processes:
             mesh_list=None
         )
 
-        # sliding to liam
-        self.veggie_robot_ctrl.rmrc_vertical_movement(
-            self.veggie_robot_ctrl.robot,
-            self.env,
-            SE3(1.2, 1.0, base_z).t,
-            SE3(1.05, 0.75, base_z).t,
-            tool_orientation=[pi, 0, 0],
-            mesh_list=mesh_list,
-            mesh_offset_along_x=-offset,
-            mesh_z_offsets=mesh_z_offsets
-        )
-
         # Slide order meshes bottom to top: tray, bread, meat, veggies
-        mesh_list = tray_meshes + bread_bottom_meshes + meat_meshes + veggie_meshes
+        mesh_list = (tray_meshes + bread_bottom_meshes + meat_meshes + veggie_meshes)
 
         # Calculate updated z offsets relative to base_z
         mesh_z_offsets = [SE3(m.T).t[2] - base_z for m in mesh_list]
 
 
         self.cobot_ctrl.process_food_order(bread_top_locs, 
-                                           [1.0-offset, 0.75, base_z], 
+                                           [1.05-offset/2, 0.75, base_z + 0.02], 
                                            bread_top_meshes, 
-                                           tool_orientation=[pi,pi,0], 
-                                           initial_z=1.05)
+                                           tool_orientation=[0,0,0], 
+                                           initial_z=veggie_final_z, grip_offset=SE3.Rz(pi))
         
-        # self.cobot_ctrl.rmrc_vertical_movement(self.cobot_ctrl.robot,
-        #     self.env,
-        #     SE3(1.0, 0.75, base_z).t, SE3(1.0, 0.75, base_z).t,
-        #     tool_orientation=[pi,pi,-pi/2],
-        #     mesh_list=(meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes)
-        #     )
+
+
+        success = self.cobot_ctrl.move_to_start_position(
+            self.cobot_ctrl.robot,
+            self.env,
+            target_pos=[1.05 - 2*offset, 0.75, base_z],
+            tool_orientation=[0, 0, 0],
+            mesh_list=None
+        )
         
-        # self.cobot_ctrl.process_food_order(bread_top_locs, 
-        #                                    [0.55, 0.7-offset, 1.05], 
-        #                                    bread_top_meshes, 
-        #                                    tool_orientation=[pi,pi,-pi/2], 
-        #                                    initial_z=1.05)
+
         
         self.cobot_ctrl.rmrc_vertical_movement(self.cobot_ctrl.robot,
             self.env,
-            SE3(1.0+offset, 0.75, base_z).t, SE3(0.55, 0.4, base_z).t,
-            tool_orientation=[pi,pi,-pi/2],
+            SE3(1.05 - offset, 0.75, base_z).t, SE3(0.55 - offset, 0.4, base_z).t,
+            tool_orientation=[0,0,0],
+            grip_offset=SE3.Rz(pi),
             mesh_list=(meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes + bread_top_meshes)
             )
         
         self.cobot_ctrl.rmrc_vertical_movement(self.cobot_ctrl.robot,
             self.env,
-            SE3(0.55 - offset, 0.4, 1.05).t, SE3(0.55, 0.7, 1.3).t,
-            tool_orientation=[pi,pi,-pi/2],
-            mesh_list=None
+            SE3(0.55 - offset, 0.4, base_z).t, (SE3(0.55 - offset, 0.4, base_z) * SE3.Rz(pi/2)).t,
+            tool_orientation=[0,0, 0], 
+            grip_offset=SE3.Rz(pi),
+            mesh_list=(meat_meshes + veggie_meshes + bread_bottom_meshes + tray_meshes + bread_top_meshes)
             )
+
 
 
     #     veggie_initial_z = meat_final_z if len(meat_locs) > 0 else bread_bottom_final_z + 0.02  # Normal gap or special if no meat

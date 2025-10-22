@@ -103,10 +103,11 @@ class RobotEnvironment:
         self.env.set_camera_pose([3, -3, 2], [1, 0.5, 0])
         self.env.step()
 
-        self.meat_robot_ctrl = FoodOrderRobotv1(self.XArm_robot, self.env)
-        self.veggie_robot_ctrl = FoodOrderRobotv1(self.irb_robot, self.env)
-        self.cobot_ctrl = FoodOrderRobotv1(self.Cobot, self.env)
-        self.UR3_robot = FoodOrderRobotv1(self.UR3_robot, self.env)
+        self.meat_robot_ctrl = FoodOrderRobotv1(self.XArm_robot, self.env, robot_name='meat')
+        self.veggie_robot_ctrl = FoodOrderRobotv1(self.irb_robot, self.env, robot_name='veggie')
+        self.cobot_ctrl = FoodOrderRobotv1(self.Cobot, self.env, robot_name='cobot')
+        self.UR3_robot = FoodOrderRobotv1(self.UR3_robot, self.env, robot_name='UR3')
+
 
 
     def setup_robots(self, env):
@@ -160,8 +161,8 @@ class RobotEnvironment:
         # Fixed height without storage_z list
         for ingr in ["bread_top", ]:
             bread_piles[ingr] = []
-            for i in range(5):
-                pose = SE3(-1.2 , 0.55 - i * 0.15, 0.98) * SE3.Trans(ENV_OFFSET) @ SE3.Rz(pi / 2)
+            for i in range(3):
+                pose = SE3(-1.3 + i * 0.12, 0.4, 0.98) * SE3.Trans(ENV_OFFSET)
                 bread_piles[ingr].append(spawn_ingredient(env, ingr, pose))
         return bread_piles
 

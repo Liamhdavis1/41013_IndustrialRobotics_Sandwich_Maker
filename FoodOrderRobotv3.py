@@ -24,9 +24,10 @@ class FoodOrderRobotv1:
     Food order processing robot using combined IK+jtraj and RMRC control
     """
     
-    def __init__(self, robot = None, env = None):
+    def __init__(self, robot = None, env = None, robot_name=None):
         self.robot = robot
         self.env = env
+        self.robot_name = robot_name
         # RMRC Parameters for precise movements
         self.rmrc_time = 1.0                      # Time for RMRC movements (pick/place)
         self.delta_t = 0.02                       # Control frequency
@@ -42,6 +43,10 @@ class FoodOrderRobotv1:
         # Define grip offset for mesh attachment (adjust as needed)
         self.grip_offset = SE3.Trans(0, 0, 0) * SE3.Rx(np.pi)  # Tool pointing down
         self.estop = False
+
+        self.default_grip_offset = SE3.Trans(0, 0, 0) * SE3.Rx(np.pi)
+        self.cobot_grip_offset = SE3.Rz(pi)  # For cobot arm needing 180° flip
+
 
 
     # ========== E-Stop ==========
@@ -120,8 +125,13 @@ class FoodOrderRobotv1:
 
     def execute_trajectory(self, robot, env, q_start, q_end, steps=50, mesh=None, mesh_list=None, grip_offset=None):
         self.wait_if_estop()
+
         if grip_offset is None:
-            grip_offset = self.grip_offset
+            if self.robot_name == 'cobot':
+                grip_offset = self.cobot_grip_offset
+            else:
+                grip_offset = self.default_grip_offset
+
         
         traj = jtraj(q_start, q_end, steps)
         for q in traj.q:
@@ -361,7 +371,12 @@ class FoodOrderRobotv1:
 
 
     # ========== Main Food Order Processing Function ==========
-    def process_food_order(self, food_locations, station_location, mesh_list = None, tool_orientation=[pi, 0, 0], initial_z=None):
+    def process_food_order(self, food_locations, station_location, mesh_list=None, 
+                       tool_orientation=[pi, 0, 0], initial_z=None, grip_offset=None):
+        
+        
+        if grip_offset is None:
+            grip_offset = self.grip_offset  # Use default grip offset from __init__
         """
         Main function to process food order by iterating through ingredient locations
         
@@ -417,14 +432,15 @@ class FoodOrderRobotv1:
             self.execute_trajectory(robot, env, robot.q.copy(), q_hover, mesh=None)
             
             print(f"  Picking up ingredient {i+1} (RMRC down)...")
-            self.rmrc_vertical_movement(robot, env, hover_above_food, food_pos, tool_orientation, mesh=None)
+            self.rmrc_vertical_movement(robot, env, hover_above_food, food_pos, tool_orientation, mesh=None, grip_offset=grip_offset)
+
 
 
             print(f"  Attaching mesh {i} to end effector...")
             attached_mesh = mesh
             
             print(f"  Lifting ingredient {i+1} (RMRC up)...")
-            self.rmrc_vertical_movement(robot, env, food_pos, hover_above_food, tool_orientation, mesh=attached_mesh)
+            self.rmrc_vertical_movement(robot, env, food_pos, hover_above_food, tool_orientation, mesh=attached_mesh, grip_offset=grip_offset)
             
             # Station hover
             # Calculate current station location with stacking
@@ -452,7 +468,7 @@ class FoodOrderRobotv1:
 
             print(f"  Placing ingredient {i+1} at station (RMRC down)...")
             place_pos = current_station_pos
-            self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh)
+            self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh, grip_offset=grip_offset)
 
 
             # print(f"  Retracting from station (RMRC up)...")
@@ -545,6 +561,7 @@ class FoodOrderRobotv1:
             place_pos = current_station_pos
             self.rmrc_vertical_movement(robot, env, hover_above_station, place_pos, tool_orientation, mesh=attached_mesh,
                                         grip_offset=SE3.Ry(pi/2) @ SE3.Rz(pi/2) @ SE3.Ty(0.2))
+            
 
 
             # Increment y-coordinate for next slice
