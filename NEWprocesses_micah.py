@@ -129,10 +129,19 @@ class processes:
         
 
         # Adjust veggie initial z with gap on meat final z
-        if len(meat_locs) > 0:
-            veggie_initial_z = meat_final_z + 0.02  # Add gap for stacking veggies on meat
+        # if len(meat_locs) > 0:
+        #     veggie_initial_z = meat_final_z + 0.02  # Add gap for stacking veggies on meat
+        # else:
+        #     veggie_initial_z = bread_bottom_final_z + 0.02  # No meat, stack on bread
+
+        if len(meat_meshes) > 0:
+            # Find the highest Z among all meat meshes
+            top_meat_z = max([SE3(m.T).t[2] for m in meat_meshes])
+            veggie_initial_z = top_meat_z + 0.01  # stack 1 cm above the highest meat surface
         else:
-            veggie_initial_z = bread_bottom_final_z + 0.02  # No meat, stack on bread
+            top_bread_z = max([SE3(m.T).t[2] for m in bread_bottom_meshes])
+            veggie_initial_z = top_bread_z + 0.01  # stack above bread if no meat
+
 
         
         veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, 
