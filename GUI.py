@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import threading
-# import serial
+import serial
 # from IngredientsLiam import RobotEnvironment
 from NEWspawnEnv import RobotEnvironment
 from NEWprocesses_micah import processes
@@ -34,8 +34,8 @@ class IngredientSelector(tk.Tk):
         self.process_thread = None
 
         # Initialize serial port and start reader thread
-        # self.serial_port = serial.Serial('COM4', 9600, timeout=1)
-        # threading.Thread(target=self.read_from_serial, daemon=True).start()
+        self.serial_port = serial.Serial('COM4', 9600, timeout=1)
+        threading.Thread(target=self.read_from_serial, daemon=True).start()
 
         plt.close('all')
 
@@ -110,20 +110,20 @@ class IngredientSelector(tk.Tk):
         ]:
             robot_ctrl.set_estop(status)
 
-    # def read_from_serial(self):
-    #     while True:
-    #         try:
-    #             line = self.serial_port.readline().decode().strip()
-    #             if line == "ESTOP_ON":
-    #                 self.estop_active = True
-    #                 self.set_estop_for_all(True)
-    #                 self.estop_button.config(text="Resume")
-    #             elif line == "ESTOP_OFF":
-    #                 self.estop_active = False
-    #                 self.set_estop_for_all(False)
-    #                 self.estop_button.config(text="Emergency Stop")
-    #         except Exception as e:
-    #             print(f"Serial read error: {e}")
+    def read_from_serial(self):
+        while True:
+            try:
+                line = self.serial_port.readline().decode().strip()
+                if line == "ESTOP_ON":
+                    self.estop_active = True
+                    self.set_estop_for_all(True)
+                    self.estop_button.config(text="Resume")
+                elif line == "ESTOP_OFF":
+                    self.estop_active = False
+                    self.set_estop_for_all(False)
+                    self.estop_button.config(text="Emergency Stop")
+            except Exception as e:
+                print(f"Serial read error: {e}")
 
     # def Collsion(robot):
     #     stl_path = os.path.join(os.path.dirname(__file__), "env", "benchv2.stl")
