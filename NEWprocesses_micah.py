@@ -78,7 +78,7 @@ class processes:
         success = self.meat_robot_ctrl.move_to_start_position(
         self.meat_robot_ctrl.robot,
         self.env,
-        target_pos=[2.55 + offset, 1, base_z],
+        target_pos=[2.35 + offset, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -110,7 +110,7 @@ class processes:
         success = self.veggie_robot_ctrl.move_to_start_position(
         self.veggie_robot_ctrl.robot,
         self.env,
-        target_pos=[1.7 - offset/2, 1, base_z],
+        target_pos=[1.5 - offset, 1, base_z],
         tool_orientation=[pi, 0, 0],
         mesh_list=None
     )
@@ -136,7 +136,7 @@ class processes:
 
         
         veggie_final_z = self.veggie_robot_ctrl.process_food_order(veggie_locs, 
-            [1.1 + 1.4*offset, 1, base_z],
+            [1.1 + 1.2*offset, 1, base_z],
             veggie_meshes, initial_z=veggie_initial_z)
 
         # Move to position before sliding
